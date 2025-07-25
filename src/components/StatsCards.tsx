@@ -122,7 +122,7 @@ const StatsCards = ({ stats }) => {
             <div
             key={index}
             className="stats-card"
-            style={{ "--card-color": card.color }}
+            style={{ "--card-color": card.color } as React.CSSProperties}
             >
             <div className="stats-card-icon">{renderIcon(card.icon)}</div>
             <div className="stats-card-content">
