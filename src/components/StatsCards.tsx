@@ -17,7 +17,7 @@ const StatsCards = ({ stats }) => {
         {
         title: "В процессе",
         value: stats.inProgress,
-        color: "#f39c12",
+        color: "#00BFFF",
         icon: "progress",
         },
         {
@@ -27,7 +27,7 @@ const StatsCards = ({ stats }) => {
         icon: "not-started",
         },
         {
-        title: "Средний прогресс",
+        title: "Выполнено в дедлайн",
         value: `${stats.averageProgress}%`,
         color: "#8B5CF6",
         icon: "chart",

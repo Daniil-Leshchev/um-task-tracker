@@ -99,7 +99,7 @@ function App() {
             />
             </div>
 
-            {activeTab === "cards" && (
+            {activeTab === "groupCards" && (
             <div className="content-section">
                 <TaskGrid tasks={filteredTasks} onShowDetails={handleShowDetails} />
             </div>

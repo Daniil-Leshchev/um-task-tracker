@@ -2,7 +2,8 @@ import '../styles/Tabs.css';
 
 const Tabs = ({ activeTab, onTabChange }) => {
     const tabs = [
-        { id: 'cards', label: 'Карточки' },
+        { id: 'groupCards', label: 'Групповые задачи' },
+        { id: 'tutorCards', label: 'Индивидуальные задачи' },
         { id: 'table', label: 'Таблица' }
     ];
 

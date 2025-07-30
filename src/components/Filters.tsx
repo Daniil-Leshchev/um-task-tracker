@@ -30,7 +30,7 @@ const Filters = ({ onFilterChange, isCollapsed, onToggleCollapse }) => {
             >
                 <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46 22,3" />
             </svg>
-            <span>Фильтры</span>
+            <span>Фильтр</span>
             </div>
             <button className="collapse-btn" onClick={onToggleCollapse}>
             {isCollapsed ? "Развернуть" : "Свернуть"}

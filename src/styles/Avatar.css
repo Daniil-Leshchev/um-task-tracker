@@ -11,10 +11,6 @@
     flex-shrink: 0;
 }
 
-.avatar:hover {
-    transform: scale(1.1);
-}
-
 /* Different sizes */
 .avatar[style*="width: 28px"] {
     font-size: 10px;
