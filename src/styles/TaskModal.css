@@ -123,7 +123,7 @@
 .curator-filter-tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 32px;
+    margin-bottom: 10px;
     border-bottom: 1px solid #E2E8F0;
 }
 
@@ -209,14 +209,7 @@
     border: 1px solid #E2E8F0;
     border-radius: 12px;
     background: #FFFFFF;
-    transition: all 0.2s;
     position: relative;
-}
-
-.curator-card:hover {
-    background: #F8FAFC;
-    border-color: #CBD5E1;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .curator-info {
@@ -328,6 +321,34 @@
     border-color: #CBD5E1;
 }
 
+.search-input-wrapper {
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    height: 40px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: row;
+    padding: 10px 10px 10px 10px;
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.elastic-search-input {
+    outline: none;
+    border: none;
+    width: 100%;
+    position: relative;
+    margin-left: 10px;
+}
+
+.elastic-search-empty {
+    list-style: none;
+    margin-left: 20px;
+}
+
 @media (max-width: 768px) {
     .modal-overlay {
         padding: 16px;
@@ -360,11 +381,9 @@
         grid-template-columns: 1fr;
     }
 
-    /* Mobile styles for new filtering elements */
     .curator-filter-tabs {
         flex-direction: column;
         gap: 4px;
-        margin-bottom: 24px;
     }
 
     .filter-tab {
@@ -390,11 +409,6 @@
 
     .curator-group-header h4 {
         font-size: 14px;
-    }
-
-    .curator-card {
-        padding: 12px;
-        gap: 8px;
     }
 
     .curator-name-type {

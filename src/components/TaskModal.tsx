@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Avatar from './Avatar';
 import ProgressCircle from './ProgressCircle';
 import '../styles/TaskModal.css';
+import ElasticSearch from './ElasticSearch';
 
 const TaskModal = ({ task, isOpen, onClose }) => {
     const [filterType, setFilterType] = useState('all');
@@ -120,7 +121,6 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                     <div className="curators-section">
                         <h3>Кураторы ({task.curators.length})</h3>
 
-                        {/* Filter Tabs */}
                         <div className="curator-filter-tabs">
                             <button
                                 className={`filter-tab ${filterType === 'all' ? 'active' : ''}`}
@@ -148,44 +148,55 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                             </button>
                         </div>
 
-                        {/* Curators Display */}
                         {filterType === 'all' ? (
                             <div className="curators-grouped">
                                 {allCurators.length > 0 && (
                                     <div className="curator-group">
                                         <div className="curator-group-content">
-                                            {allCurators.map(curator => (
-                                                <div key={curator.id} className="curator-card">
-                                                    <Avatar
-                                                        name={curator.name}
-                                                        initials={curator.initials}
-                                                        color={curator.color}
-                                                        size={40}
-                                                    />
-                                                    <div className="curator-info">
-                                                        <div className="curator-name-type">
-                                                            <span className="curator-name">{curator.name}</span>
-                                                            <span className="curator-type">{curator.type}</span>
-                                                        </div>
-                                                        <div className="curator-status-row">
-                                                            <span className={`curator-status ${getStatusBadge(curator.status).className}`}>
-                                                                {getStatusBadge(curator.status).text}
+                                            <ElasticSearch
+                                                items={allCurators.map(c => ({
+                                                    id: c.id,
+                                                    displayText: c.name,
+                                                    name: c.name,
+                                                    initials: c.initials,
+                                                    color: c.color,
+                                                    type: c.type,
+                                                    status: c.status,
+                                                    completedAt: c.completedAt
+                                                }))}
+                                                renderItem={(item) => (
+                                                    <div key={item.id} className="curator-card">
+                                                        <Avatar
+                                                            name={item.name}
+                                                            initials={item.initials}
+                                                            color={item.color}
+                                                            size={40}
+                                                        />
+                                                        <div className="curator-info">
+                                                            <div className="curator-name-type">
+                                                            <span className="curator-name">{item.name}</span>
+                                                            <span className="curator-type">{item.type}</span>
+                                                            </div>
+                                                            <div className="curator-status-row">
+                                                            <span className={`curator-status ${getStatusBadge(item.status).className}`}>
+                                                                {getStatusBadge(item.status).text}
                                                             </span>
-                                                            {curator.completedAt && (
+                                                            {item.completedAt && (
                                                                 <span className="curator-completion-date">
-                                                                    {formatDateTime(curator.completedAt)}
+                                                                {formatDateTime(item.completedAt)}
                                                                 </span>
                                                             )}
+                                                            </div>
                                                         </div>
+                                                        <button className="curator-view-btn">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                                <circle cx="12" cy="12" r="3" />
+                                                            </svg>
+                                                        </button>
                                                     </div>
-                                                    <button className="curator-view-btn">
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                            <circle cx="12" cy="12" r="3" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                )}
+                                            />
                                         </div>
                                     </div>
                                 )}
