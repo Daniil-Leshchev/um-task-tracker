@@ -8,7 +8,8 @@ export const tasks = [
     completed: 8,
     total: 12,
     notCompleted: 4,
-    deadline: "2024-12-20",
+    deadline: "2024-12-20T14:45:00Z",
+    created: "2024-12-13T10:30:00Z",
     curators: [
       { 
         id: 1, 
@@ -47,7 +48,8 @@ export const tasks = [
     completed: 20,
     total: 20,
     notCompleted: 0,
-    deadline: "2024-12-18",
+    deadline: "2024-12-18T10:30:00Z",
+    created: "2024-12-10T10:30:00Z",
     curators: [
       { 
         id: 4, 
@@ -77,7 +79,8 @@ export const tasks = [
     completed: 5,
     total: 25,
     notCompleted: 20,
-    deadline: "2024-12-25",
+    deadline: "2024-12-25T10:30:00Z",
+    created: "2024-12-23T10:30:00Z",
     curators: [
       { 
         id: 6, 
@@ -107,7 +110,8 @@ export const tasks = [
     completed: 12,
     total: 18,
     notCompleted: 6,
-    deadline: "2024-12-22",
+    deadline: "2024-12-22T10:30:00Z",
+    created: "2024-12-10T10:30:00Z",
     curators: [
       { 
         id: 8, 
@@ -137,7 +141,8 @@ export const tasks = [
     completed: 0,
     total: 15,
     notCompleted: 15,
-    deadline: "2024-12-30",
+    deadline: "2024-12-30T10:30:00Z",
+    created: "2024-12-23T10:30:00Z",
     curators: [
       { 
         id: 10, 
@@ -167,7 +172,8 @@ export const tasks = [
     completed: 20,
     total: 28,
     notCompleted: 8,
-    deadline: "2024-12-28",
+    deadline: "2024-12-28T10:30:00Z",
+    created: "2024-12-10T10:30:00Z",
     curators: [
       { 
         id: 12, 
@@ -197,7 +203,8 @@ export const tasks = [
     completed: 26,
     total: 26,
     notCompleted: 0,
-    deadline: "2024-12-15",
+    deadline: "2024-12-15T10:30:00Z",
+    created: "2024-12-10T10:30:00Z",
     curators: [
       { 
         id: 14, 
@@ -227,7 +234,8 @@ export const tasks = [
     completed: 0,
     total: 22,
     notCompleted: 22,
-    deadline: "2025-01-15",
+    deadline: "2025-01-15T10:30:00Z",
+    created: "2024-12-23T10:30:00Z",
     curators: [
       { 
         id: 16, 
@@ -257,7 +265,8 @@ export const tasks = [
     completed: 9,
     total: 16,
     notCompleted: 7,
-    deadline: "2024-12-26",
+    deadline: "2024-12-26T10:30:00Z",
+    created: "2024-12-23T10:30:00Z",
     curators: [
       { 
         id: 18, 

@@ -10,15 +10,6 @@ const TaskModal = ({ task, isOpen, onClose }) => {
 
     if (!isOpen || !task) return null;
 
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    };
-
     const formatDateTime = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleString('ru-RU', {
@@ -96,8 +87,8 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                 </div>
 
                                 <div className="task-info-item">
-                                    <span className="task-info-label">Прогресс:</span>
-                                    <span className="task-info-value">{task.progress}%</span>
+                                    <span className="task-info-label">Дедлайн:</span>
+                                    <span className="task-info-value">{formatDateTime(task.deadline)}</span>
                                 </div>
 
                                 <div className="task-info-item">
@@ -106,14 +97,10 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                 </div>
 
                                 <div className="task-info-item">
-                                    <span className="task-info-label">Не выполнено:</span>
-                                    <span className="task-info-value">{task.notCompleted}</span>
+                                    <span className="task-info-label">Создано:</span>
+                                    <span className="task-info-value">{formatDateTime(task.created)}</span>
                                 </div>
 
-                                <div className="task-info-item">
-                                    <span className="task-info-label">Дедлайн:</span>
-                                    <span className="task-info-value">{formatDate(task.deadline)}</span>
-                                </div>
                             </div>
                         </div>
                     </div>
