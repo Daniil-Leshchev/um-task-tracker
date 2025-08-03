@@ -1,8 +1,9 @@
 
-import TaskCard from './TaskCard';
+import GroupedTaskCard from './GroupedTaskCard';
+import IndividualTaskCard from './IndividualTaskCard';
 import '../styles/TaskGrid.css';
 
-const TaskGrid = ({ tasks, onShowDetails }) => {
+const TaskGrid = ({ tasks, activeTab, onShowDetails }) => {
     if (tasks.length === 0) {
         return (
         <div className="task-grid-empty">
@@ -11,10 +12,24 @@ const TaskGrid = ({ tasks, onShowDetails }) => {
         );
     }
 
+    if (activeTab === "groupCards") {
+        return (
+        <div className="task-grid">
+            {tasks.map(task => (
+                <GroupedTaskCard
+                key={task.id}
+                task={task}
+                onShowDetails={onShowDetails}
+                />
+            ))}
+        </div>
+        );
+    }
+
     return (
         <div className="task-grid">
         {tasks.map(task => (
-            <TaskCard
+            <IndividualTaskCard
             key={task.id}
             task={task}
             onShowDetails={onShowDetails}

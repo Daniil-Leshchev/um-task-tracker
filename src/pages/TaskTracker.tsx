@@ -100,7 +100,13 @@ export default function TaskTracker() {
 
             {activeTab === "groupCards" && (
             <div className="content-section">
-                <TaskGrid tasks={filteredTasks} onShowDetails={handleShowDetails} />
+                <TaskGrid tasks={filteredTasks} activeTab = "groupCards" onShowDetails={handleShowDetails} />
+            </div>
+            )}
+
+            {activeTab === "individualCards" && (
+            <div className="content-section">
+                <TaskGrid tasks={filteredTasks} activeTab = "individualCards" onShowDetails={handleShowDetails} />
             </div>
             )}
 

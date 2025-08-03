@@ -2,7 +2,7 @@
 import ProgressCircle from './ProgressCircle';
 import '../styles/TaskCard.css';
 
-const TaskCard = ({ task, onShowDetails }) => {
+const GroupedTaskCard = ({ task, onShowDetails }) => {
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString('ru-RU', {
@@ -65,4 +65,4 @@ const TaskCard = ({ task, onShowDetails }) => {
     );
 };
 
-export default TaskCard;
+export default GroupedTaskCard;

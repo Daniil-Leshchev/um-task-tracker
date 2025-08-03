@@ -17,6 +17,9 @@ const Header: React.FC<HeaderProps> = ({ onRefresh, lastUpdated }) => {
             <button className="image-icon">
                 <img src="/images/icon.svg"  alt="Иконка личного кабинета"/>
             </button>
+            <button className="image-notification">
+                <img src="/images/notification.svg"  alt="Иконка уведомлений"/>
+            </button>
         </div>
         </header>
     );

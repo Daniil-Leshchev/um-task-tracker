@@ -16,13 +16,17 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.task-card-header {
+.task-card-header { 
+    max-width: 260px;  
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
 .task-title {
+    white-space: nowrap;
+    overflow: hidden;    
+    text-overflow: ellipsis;
     font-size: 16px;
     font-weight: 600;
     color: #1E293B;
@@ -61,6 +65,13 @@
     color: #64748B;
 }
 
+.task-stat span {
+    white-space: nowrap;
+    overflow: hidden;    
+    text-overflow: ellipsis;   
+    max-width: 220px;  
+}
+
 .task-stat svg {
     width: 16px;
     height: 16px;
@@ -71,6 +82,7 @@
     font-size: 14px;
     color: #64748B;
     padding: 8px 0;
+
 }
 
 .task-actions {

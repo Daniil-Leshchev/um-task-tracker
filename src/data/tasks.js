@@ -31,6 +31,42 @@ export const tasks = [
         status: "completed_late",
         completedAt: "2024-12-16T14:45:00Z"
       },
+            { 
+        id: 1, 
+        name: "Анна Петрова", 
+        initials: "АП", 
+        color: "#f39c12",
+        type: "СК",
+        status: "completed",
+        completedAt: "2024-12-15T10:30:00Z"
+      },
+            { 
+        id: 1, 
+        name: "Анна Петрова", 
+        initials: "АП", 
+        color: "#f39c12",
+        type: "СК",
+        status: "completed",
+        completedAt: "2024-12-15T10:30:00Z"
+      },
+            { 
+        id: 1, 
+        name: "Анна Петрова", 
+        initials: "АП", 
+        color: "#f39c12",
+        type: "СК",
+        status: "completed",
+        completedAt: "2024-12-15T10:30:00Z"
+      },
+            { 
+        id: 1, 
+        name: "Анна Петрова", 
+        initials: "АП", 
+        color: "#f39c12",
+        type: "СК",
+        status: "completed",
+        completedAt: "2024-12-15T10:30:00Z"
+      },
       { 
         id: 3, 
         name: "Елена Козлова", 
