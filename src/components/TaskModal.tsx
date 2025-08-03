@@ -85,10 +85,10 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                     <span className="task-info-label">Статус:</span>
                                     <span className="task-status-badge">{task.status}</span>
                                 </div>
-
+                                
                                 <div className="task-info-item">
-                                    <span className="task-info-label">Дедлайн:</span>
-                                    <span className="task-info-value">{formatDateTime(task.deadline)}</span>
+                                    <span className="task-info-label">Создано:</span>
+                                    <span className="task-info-value">{formatDateTime(task.created)}</span>
                                 </div>
 
                                 <div className="task-info-item">
@@ -97,12 +97,20 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                 </div>
 
                                 <div className="task-info-item">
-                                    <span className="task-info-label">Создано:</span>
-                                    <span className="task-info-value">{formatDateTime(task.created)}</span>
+                                    <span className="task-info-label">Дедлайн:</span>
+                                    <span className="task-info-value">{formatDateTime(task.deadline)}</span>
                                 </div>
-
                             </div>
                         </div>
+                    </div>
+                    <div className="task-info-item">
+                        <span className="task-info-label">Описание: </span>
+                        <span className="task-info-value">{task.description}</span>
+                    </div>
+
+                    <div className="task-info-item-last">
+                        <span className="task-info-label">Отчет: </span>
+                        <span className="task-info-value">{task.report}</span>
                     </div>
 
                     <div className="curators-section">

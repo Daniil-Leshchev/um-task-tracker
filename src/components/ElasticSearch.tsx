@@ -23,7 +23,7 @@ interface ElasticSearchProps<T extends ElasticSearchItem> {
 
 export default function ElasticSearch<T extends ElasticSearchItem>({
   items,
-  placeholder = 'Введите имя куратора',
+  placeholder = 'Введите имя куратора...',
   filterFn,
   renderItem,
   emptyMessage = 'Ничего не найдено',
