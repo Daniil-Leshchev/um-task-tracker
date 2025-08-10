@@ -252,7 +252,7 @@
     position: absolute;
     width: 643px;
     height: 530px;
-    top: 101px;
+    top: 140px;
     right: 94px;
     display: flex;
     flex-direction: column;
@@ -262,7 +262,6 @@
 .choosingRole_container h2 {
     width: 473px;
     height: 37px;
-    margin-top: 20px;
     margin-left: 140px;
     color: #394561;
     font-size: 30px;
@@ -271,8 +270,9 @@
 
 .role-container {
     width: 600px;
-    height: 400px;
-    margin-top: 39px;
+    max-height: 400px;
+    height: min-content;
+    margin-top: 50px;
     display: flex;
     flex-direction: column;
     border: 1px solid #c8cdd4;

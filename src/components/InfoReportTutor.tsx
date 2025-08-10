@@ -11,6 +11,19 @@ const InfoReportTutor = ({ report }) => {
         return date.toLocaleString("ru-RU");
     };
 
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'completed':
+                return { text: 'Выполнено', className: 'status-badge-completed' };
+            case 'completed_late':
+                return { text: 'Выполнено с опозданием', className: 'status-badge-late' };
+            case 'not_completed':
+                return { text: 'Не выполнено', className: 'status-badge-not-completed' };
+            default:
+                return { text: 'Неизвестно', className: 'status-badge-unknown' };
+        }
+    };
+
     const directUrl = `https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=${encodeURIComponent(report.reportUrl)}`;
 
     return (
@@ -24,7 +37,7 @@ const InfoReportTutor = ({ report }) => {
                     </div>
                     <div className="task-info-item">
                         <span className="task-info-label">Статус:</span>
-                        <span className="task-status-badge">{report.status}</span>
+                        <span className="task-status-badge">{getStatusBadge(report.status).text}</span>
                     </div>
                     <div className="task-info-item">
                         <span className="task-info-label">Время выполнения:</span>
@@ -44,7 +57,7 @@ const InfoReportTutor = ({ report }) => {
                         <img 
                             className="report-info-image"
                             src="../images/picture.jpg" 
-                            alt="Визуальная часть отчета"
+                            alt="Картинка отчета"
                         />
                         )}
                         {report.reportText && (
