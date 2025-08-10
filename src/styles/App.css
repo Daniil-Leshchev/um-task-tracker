@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    scrollbar-color: #c8cdd4 #f8fafc; 
 }
 
 body {

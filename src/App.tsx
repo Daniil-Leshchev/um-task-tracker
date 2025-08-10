@@ -9,6 +9,7 @@ import Loading from './components/Loading';
 import NotFound from './components/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import RegisterSecondPage from './pages/RegisterSecondPage';
+import Profile from './pages/Profile';
 import "./styles/App.css";
 
 function RootRedirect() {
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/registerSecondPage" element={<RegisterSecondPage />} />
             <Route path="/tasktracker" element={<TaskTracker />} />
             <Route path="/reports/:taskId/:curatorId" element={<ReportTutor />} />
+            <Route path="/profile" element={<Profile />} />
             <Route element={<ProtectedRoute> <Outlet/> </ProtectedRoute>}>
                 
             </Route>
