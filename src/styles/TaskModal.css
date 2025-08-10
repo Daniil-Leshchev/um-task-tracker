@@ -337,25 +337,30 @@
     margin-bottom: 15px;
     display: flex;
     flex-direction: row;
-    padding: 10px 10px 10px 10px;
+    align-items: center;
+    padding-right: 10px;
 }
 
 .search-icon {
     width: 20px;
     height: 20px;
+    margin-left: 10px;
+    flex-shrink: 0;
 }
 
 .elastic-search-input {
     outline: none;
     border: none;
     width: 100%;
-    position: relative;
-    margin-left: 10px;
+    padding: 0 10px;
+    height: 100%; 
+    background-color: inherit;
 }
 
 .elastic-search-empty {
-    list-style: none;
+    border: none;
     margin-left: 20px;
+    list-style: none;
 }
 
 @media (max-width: 768px) {

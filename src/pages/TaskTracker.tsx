@@ -8,7 +8,7 @@ import TaskModal from "../components/TaskModal";
 import { tasks, stats } from "../data/tasks";
 
 export default function TaskTracker() {
-    const [activeTab, setActiveTab] = useState("cards");
+    const [activeTab, setActiveTab] = useState("groupCards");
     const [filteredTasks, setFilteredTasks] = useState(tasks);
     const [selectedTask, setSelectedTask] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);

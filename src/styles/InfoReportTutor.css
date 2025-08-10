@@ -2,7 +2,7 @@
     padding: 0px 20px 10px 30px;
     display: flex;
     flex-direction: row;
-    gap: 200px;
+    gap: 150px;
 }
 
 .main-container h2 {
@@ -24,4 +24,24 @@
 
 .report-info {
     margin-top: 40px;
+    max-width: 750px;
+    max-height: 500px;
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+}
+
+.report-info-image {
+    max-width: 500px;
+    max-height: 500px;
+}
+
+.report-info-text {
+    width: 350px;
+    max-height: 500px;
+    height: min-content;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 12px; 
+    padding: 20px;
 }

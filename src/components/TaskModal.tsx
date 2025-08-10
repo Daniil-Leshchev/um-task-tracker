@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar from './Avatar';
 import ProgressCircle from './ProgressCircle';
-import '../styles/TaskModal.css';
 import ElasticSearch from './ElasticSearch';
+import '../styles/TaskModal.css';
 
 const TaskModal = ({ task, isOpen, onClose }) => {
     const [filterType, setFilterType] = useState('all');
@@ -60,6 +59,10 @@ const TaskModal = ({ task, isOpen, onClose }) => {
     };
 
     const filteredCurators = getFilteredCurators();
+
+    const isTaskCompleted = (status) => {
+        return status === 'completed' || status === 'completed_late';
+    };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -160,6 +163,7 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                                     status: c.status,
                                                     completedAt: c.completedAt
                                                 }))}
+                                                backgroundcolor = 'white'
                                                 renderItem={(item) => (
                                                     <div key={item.id} className="curator-card">
                                                         <Avatar
@@ -184,14 +188,16 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                                             )}
                                                             </div>
                                                         </div>
-                                                        <Link to="/reporttutor">
-                                                            <button className="curator-view-btn">
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        {isTaskCompleted(item.status) && (
+                                                            <Link to={`/reports/${task.id}/${item.id}`}>
+                                                                <button className="curator-view-btn">
+                                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                                                                     <circle cx="12" cy="12" r="3" />
-                                                                </svg>
-                                                            </button>
-                                                        </Link>
+                                                                    </svg>
+                                                                </button>
+                                                            </Link>
+                                                        )}
                                                     </div>
                                                 )}
                                             />
@@ -225,12 +231,14 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                                 )}
                                             </div>
                                         </div>
-                                        <button className="curator-view-btn">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                <circle cx="12" cy="12" r="3" />
-                                            </svg>
-                                        </button>
+                                        {isTaskCompleted(curator.status) && (
+                                            <button className="curator-view-btn">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

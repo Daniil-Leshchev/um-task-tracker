@@ -1,33 +1,34 @@
 import { useRef, useState } from 'react';
-import '../styles/TaskModal.css';
 
 interface ElasticSearchItem {
-  id: string;
+  id?: string;
   displayText: string;
-  name: string,
-  initials: string,
-  color: string,
-  type: string,
-  status: string,
-  completedAt: string
+  name?: string,
+  initials?: string,
+  color?: string,
+  type?: string,
+  status?: string,
+  completedAt?: string
 }
 
 interface ElasticSearchProps<T extends ElasticSearchItem> {
   items: T[];
+  backgroundcolor: string;
   placeholder?: string;
-  filterFn?: (item: T, searchTerm: string) => boolean;
   renderItem?: (item: T) => React.ReactNode;
   emptyMessage?: string;
   defaultVisible?: boolean;
+  onItemClick?: (item: T) => void; // Добавляем новый пропс
 }
 
 export default function ElasticSearch<T extends ElasticSearchItem>({
   items,
+  backgroundcolor,
   placeholder = 'Введите имя куратора...',
-  filterFn,
   renderItem,
   emptyMessage = 'Ничего не найдено',
   defaultVisible = true,
+  onItemClick, // Получаем пропс
 }: ElasticSearchProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,23 +36,25 @@ export default function ElasticSearch<T extends ElasticSearchItem>({
 
   const filteredItems = items.filter(item => {
     if (!searchTerm) return true;
-    
     const term = searchTerm.trim().toLowerCase();
-    if (filterFn) {
-      return filterFn(item, term);
-    }
     return item.displayText.toLowerCase().includes(term);
   });
 
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-
     if (!isListVisible) setIsListVisible(true);
   };
 
   const handleFocus = () => {
     setIsListVisible(true);
+  };
+
+  const handleItemClick = (item: T) => {
+    if (onItemClick) {
+      onItemClick(item);
+      setIsListVisible(false);
+      setSearchTerm(item.displayText);
+    }
   };
 
   return (
@@ -65,6 +68,7 @@ export default function ElasticSearch<T extends ElasticSearchItem>({
         <input
           ref={inputRef}
           className="elastic-search-input"
+          style={{ backgroundColor: backgroundcolor }}
           type="text"
           placeholder={placeholder}
           value={searchTerm}
@@ -77,11 +81,13 @@ export default function ElasticSearch<T extends ElasticSearchItem>({
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
               <li
-                key={item.id}
+                key={item.id || item.displayText}
                 className={`elastic-search-item`}
                 style={{
-                  display: searchTerm && !filteredItems.includes(item) ? 'none' : 'block'
+                  display: searchTerm && !filteredItems.includes(item) ? 'none' : 'block',
+                  cursor: onItemClick ? 'pointer' : 'default'
                 }}
+                onClick={() => onItemClick && handleItemClick(item)}
               >
                 {renderItem ? renderItem(item) : item.displayText}
               </li>
