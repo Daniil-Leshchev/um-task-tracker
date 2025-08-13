@@ -1,3 +1,9 @@
+.tabsAndCreateTask {
+    display: flex;
+    flex-direction: row;
+    gap: 40px;
+}
+
 .tabs {
     display: flex;
     background: #FFFFFF;
@@ -35,6 +41,19 @@
 .tab.active:hover {
     background: #f39c12;
     color: #FFFFFF;
+}
+
+.createTask {
+    width: 140px;
+    height: 40px;
+    margin-top: 5px;
+    background-color: #15bf7ef7;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
 }
 
 @media (max-width: 768px) {

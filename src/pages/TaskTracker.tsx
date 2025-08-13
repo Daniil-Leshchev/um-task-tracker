@@ -87,7 +87,7 @@ export default function TaskTracker() {
             </div>
 
             <div className="content-section">
-            <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
+                <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
             </div>
 
             <div className="content-section">

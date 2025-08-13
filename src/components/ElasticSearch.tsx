@@ -18,7 +18,12 @@ interface ElasticSearchProps<T extends ElasticSearchItem> {
   renderItem?: (item: T) => React.ReactNode;
   emptyMessage?: string;
   defaultVisible?: boolean;
-  onItemClick?: (item: T) => void; // Добавляем новый пропс
+  onItemClick?: (item: T) => void;
+
+  isMultiSelect?: boolean; 
+  selectedItems?: string[];
+  keepListVisible?: boolean;
+  disableInputCapture?: boolean;
 }
 
 export default function ElasticSearch<T extends ElasticSearchItem>({
@@ -28,7 +33,12 @@ export default function ElasticSearch<T extends ElasticSearchItem>({
   renderItem,
   emptyMessage = 'Ничего не найдено',
   defaultVisible = true,
-  onItemClick, // Получаем пропс
+  onItemClick,
+
+  isMultiSelect = false,
+  selectedItems = [],
+  keepListVisible = false,
+  disableInputCapture = false,
 }: ElasticSearchProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,12 +62,16 @@ export default function ElasticSearch<T extends ElasticSearchItem>({
   const handleItemClick = (item: T) => {
     if (onItemClick) {
       onItemClick(item);
-      setIsListVisible(false);
-      setSearchTerm(item.displayText);
+      if (!keepListVisible) {
+        setIsListVisible(false);
+      }
+      if (!disableInputCapture) {
+        setSearchTerm(item.displayText);
+      }
     }
   };
 
-  return (
+    return (
     <div className={`elastic-search`}>
       <div className="search-input-wrapper">
         <img 
@@ -84,12 +98,23 @@ export default function ElasticSearch<T extends ElasticSearchItem>({
                 key={item.id || item.displayText}
                 className={`elastic-search-item`}
                 style={{
-                  display: searchTerm && !filteredItems.includes(item) ? 'none' : 'block',
+                  display: searchTerm && !filteredItems.includes(item) ? 'none' : 'flex',
+                  flexDirection: 'row',
                   cursor: onItemClick ? 'pointer' : 'default'
                 }}
                 onClick={() => onItemClick && handleItemClick(item)}
               >
-                {renderItem ? renderItem(item) : item.displayText}
+                {isMultiSelect && (
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.includes(item.id || item.displayText)}
+                    readOnly
+                    style={{ marginRight: '10px',  marginLeft: '20px'}}
+                  />
+                )}
+                  <div style={{ flex: 1 }}>
+                    {renderItem ? renderItem(item) : item.displayText}
+                  </div>
               </li>
             ))
           ) : (
