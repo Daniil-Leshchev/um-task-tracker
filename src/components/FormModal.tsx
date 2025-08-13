@@ -117,7 +117,7 @@ const curators = users.filter(user =>
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content create-task-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="create-task-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{step === 1 ? 'Создание новой задачи' : 'Назначение задачи'}</h2>
           <button className="modal-close" onClick={onClose}>
