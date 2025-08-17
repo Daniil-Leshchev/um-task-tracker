@@ -159,7 +159,7 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                                     name: c.name,
                                                     initials: c.initials,
                                                     color: c.color,
-                                                    type: c.type,
+                                                    role: c.role,
                                                     status: c.status,
                                                     completedAt: c.completedAt
                                                 }))}
@@ -175,7 +175,7 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                                         <div className="curator-info">
                                                             <div className="curator-name-type">
                                                             <span className="curator-name">{item.name}</span>
-                                                            <span className="curator-type">{item.type}</span>
+                                                            <span className="curator-type">{item.role}</span>
                                                             </div>
                                                             <div className="curator-status-row">
                                                             <span className={`curator-status ${getStatusBadge(item.status).className}`}>

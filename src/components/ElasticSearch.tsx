@@ -4,11 +4,15 @@ interface ElasticSearchItem {
   id?: string;
   displayText: string;
   name?: string,
+  surname?: string,
   initials?: string,
   color?: string,
-  type?: string,
+  role?: string,
   status?: string,
-  completedAt?: string
+  completedAt?: string,
+  subject?: string,
+  confirm?: string,
+  nameMentor?: string | null
 }
 
 interface ElasticSearchProps<T extends ElasticSearchItem> {

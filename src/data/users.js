@@ -8,7 +8,9 @@ export const users = [
         color: "#f39c12",
         role: "Личный куратор",
         subject: "Математика",
-        department: "ЕГЭ"
+        department: "ЕГЭ",
+        confirm: "False",
+        nameMentor: null
     },
     {
         id: 2, 
@@ -19,7 +21,9 @@ export const users = [
         color: "#f39c12",
         role: "Руководитель предмета",
         subject: "Математика",
-        department: "ЕГЭ"
+        department: "ЕГЭ",
+        confirm: "True",
+        nameMentor: null
     },
     { 
         id: 3, 
@@ -28,8 +32,23 @@ export const users = [
         email: "lenochka@mail.ru",
         initials: "ЕК", 
         color: "#F59E0B",
-        role: "Стандарт-куратор",
+        role: "Наставник личных кураторов",
         subject: "Математика",
-        department: "ЕГЭ"
-    }
+        department: "ЕГЭ",
+        confirm: "True",
+        nameMentor: null
+    },
+    {
+        id: 4, 
+        name: "Всеволод", 
+        surname: "Петров",
+        email: "dododod@mail.ru",
+        initials: "ВП", 
+        color: "#f39c12",
+        role: "Личный куратор",
+        subject: "Физика",
+        department: "ОГЭ",
+        confirm: "True",
+        nameMentor: "Елена Козлова"
+    },
 ]

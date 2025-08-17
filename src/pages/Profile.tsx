@@ -109,7 +109,7 @@ export default function Profile() {
         <div className="profile-page">
             <div className='profile-page_title'>
                 <h1 className="page-title-2">Мой профиль</h1>
-                <Link to="/">
+                <Link to="/admin">
                     <button className='admin'>
                         Админ
                     </button>

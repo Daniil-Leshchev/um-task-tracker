@@ -246,7 +246,7 @@ const curators = users.filter(user =>
                           name: `${curator.name} ${curator.surname}`,
                           initials: curator.initials,
                           color: curator.color,
-                          type: curator.role
+                          role: curator.role
                         }))}
                         backgroundcolor="white"
                         placeholder="Поиск куратора..."
@@ -278,7 +278,7 @@ const curators = users.filter(user =>
                             </div>
                             <div style={{ flex: 1 }}>
                               <div>{item.name}</div>
-                              <div style={{ fontSize: '0.8em', color: '#666' }}>{item.type}</div>
+                              <div style={{ fontSize: '0.8em', color: '#666' }}>{item.role}</div>
                             </div>
                           </div>
                         )}
