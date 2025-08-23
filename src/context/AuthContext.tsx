@@ -3,16 +3,13 @@ import { authService } from '../utils/authService';
 import api from '../api/client';
 
 export interface User {
-    id: number;
-    last_name: string;
     first_name: string;
-    patronymic: string;
+    last_name: string;
     email: string;
-    profession: string | null;
-    profession_id: number | null;
-    direction: string | null;
-    direction_id: number | null;
-    academic_group: string | null;
+    subject: string;
+    role: string;
+    department: string;
+    is_admin: boolean;
 }
 
 interface AuthContextValue {

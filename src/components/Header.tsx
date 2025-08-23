@@ -11,7 +11,9 @@ const Header: React.FC<HeaderProps> = ({ onRefresh, lastUpdated }) => {
     return (
         <header className="header">
         <div className="header-content">
-            <img src="/images/logo.svg"  alt="Логотип" className="image-logo"/>
+            <Link to='/tasktracker' replace>
+                <img src="/images/logo.svg"  alt="Логотип" className="image-logo"/>
+            </Link>
             <div className="header-title">
                 <h1>Умная система мониторинга задач</h1>
             </div>

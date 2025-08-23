@@ -12,6 +12,7 @@ import RegisterSecondPage from './pages/RegisterSecondPage';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import "./styles/App.css";
+import AdminRoute from './components/AdminROute';
 
 function RootRedirect() {
     const auth = useContext(AuthContext)!;
@@ -26,17 +27,15 @@ function RootRedirect() {
 export default function App() {
     return (
         <Routes>
-            {/* <Route path="/" element={<RootRedirect />} /> */}
-            <Route path="/" element={<Register />} />
+            <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<Authorization />} />
             <Route path="/register" element={<Register />} />
             <Route path="/registerSecondPage" element={<RegisterSecondPage />} />
-            <Route path="/tasktracker" element={<TaskTracker />} />
-            <Route path="/reports/:taskId/:curatorId" element={<ReportTutor />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route element={<ProtectedRoute> <Outlet/> </ProtectedRoute>}>
-                
+            <Route element={<ProtectedRoute> <Outlet/></ProtectedRoute>}>
+                <Route path="/tasktracker" element={<TaskTracker />} />
+                <Route path="/reports/:taskId/:curatorId" element={<ReportTutor />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />
             

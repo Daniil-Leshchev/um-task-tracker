@@ -2,7 +2,7 @@ import axios from 'axios';
 import { authService } from '../utils/authService';
 
 const api = axios.create({
-    baseURL: 'https://urfuture.tech/api/',
+    baseURL: 'http://127.0.0.1:8000/api/',
     headers: {
         'Content-Type': 'application/json'
      },
@@ -19,7 +19,15 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
     res => res,
     async err => {
-        if (err.response?.status === 401) {
+        const { config, response } = err || {};
+        const url = (config?.url || '').toString();
+
+        const isAuthEndpoint =
+        url.includes('/login') ||
+        url.includes('/register') ||
+        url.includes('/token/refresh');
+
+        if (response?.status === 401 && !isAuthEndpoint) {
         try {
             await authService?.refreshTokens();
             return api(err.config);

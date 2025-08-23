@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 
 interface ElasticSearchItem {
-  id?: string;
+  id?: number;
   displayText: string;
   name?: string,
   surname?: string,

@@ -1,30 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import '../styles/Register.css';
 import RegistrationLeftPart from '../components/RegistrationLeftPart';
+import { AuthContext } from '../context/AuthContext';
 
 export default function Register(){
+    const auth = useContext(AuthContext)!;
     const navigate = useNavigate();
     const [form, setForm] = useState({
         last_name: '',
         first_name: '',
-        patronymic: '',
         email: '',
         password: '',
         passwordConfirm: '',
+        id_tg: '',
     });
     const [error, setError] = useState<string>('');
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
+
     useEffect(() => {
         setForm({
             last_name: '',
             first_name: '',
-            patronymic: '',
             email: '',
             password: '',
             passwordConfirm: '',
+            id_tg: ''
         });
         setError('');
         setShowPassword(false);
@@ -46,8 +49,12 @@ export default function Register(){
             setError('Пароли не совпадают');
             return;
         }
-        navigate('/choosing-direction', { state: form });
+        navigate('/registerSecondPage', { state: form });
     };
+
+    if (!auth.loading && auth.user) {
+        return <Navigate to="/tasktracker" replace />;
+    }
 
     return (
         <div className="wrapper">
@@ -133,6 +140,20 @@ export default function Register(){
                             src={showPasswordConfirm ? "/images/openPassword.svg" : "/images/hidePassword.svg"}
                             alt="Спрятать пароль"
                             onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                        />
+                    </div>
+                </div>
+                <div className="registration-container_id_tg">
+                    <h3>ID TG</h3>
+                    <div className="registration-container_id_tg_input">
+                        <input
+                            type="text"
+                            name="id_tg"
+                            value={form.id_tg}
+                            onChange={handleChange}
+                            className="registration-container_id_tg_input_field"
+                            placeholder="Введите id tg"
+                            required
                         />
                     </div>
                 </div>

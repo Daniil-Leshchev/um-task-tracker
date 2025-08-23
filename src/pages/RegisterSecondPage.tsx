@@ -1,18 +1,22 @@
 import { useState, useEffect, useContext } from 'react';
-import { data, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ElasticSearch from '../components/ElasticSearch';
-// import { type Direction, fetchDirections } from '../api/directions';
 import { AuthContext } from '../context/AuthContext';
 import RegistrationLeftPart from '../components/RegistrationLeftPart';
-import { roles, subjects, departments} from '../data/dataRegister';
-import '../styles/Register.css';
+import { fetchRoles, fetchSubjects, fetchDepartments } from '../api/catalogs';
+import { isAxiosError } from 'axios';
+import capitalize from '../utils/capitalize';
 
 export default function RegisterSecondPage() {
-    // const [directions, setDirections] = useState<Direction[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [selectedRole, setSelectedRole] = useState<string>('');
-    const [selectedSubject, setSelectedSubject] = useState<string>('');
-    const [selectedDepartment, setSelectedDepartment] = useState<string>('');
+    const [roles, setRoles] = useState<Array<{ id: number; name: string }>>([]);
+    const [subjects, setSubjects] = useState<Array<{ id: number; name: string }>>([]);
+    const [departments, setDepartments] = useState<Array<{ id: number; name: string }>>([]);
+    const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+    const [selectedRoleLabel, setSelectedRoleLabel] = useState<string>('');
+    const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
+    const [selectedSubjectLabel, setSelectedSubjectLabel] = useState<string>('');
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
 
@@ -28,50 +32,70 @@ export default function RegisterSecondPage() {
         passwordConfirm: string;
     };
 
-    // useEffect(() => {
-    //     if (!location.state) {
-    //         navigate('/register');
-    //     }
-    // }, [location.state, navigate]);
+    useEffect(() => {
+        if (!location.state) {
+            navigate('/register');
+        }
+    }, [location.state, navigate]);
 
-    // useEffect(() => {
-    //     setLoading(true);
-    //     fetchDirections()
-    //         .then(setDirections)
-    //         .finally(() => setLoading(false));
-    // }, []);
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                setLoading(true);
+                const [r, s, d] = await Promise.all([
+                    fetchRoles(),
+                    fetchSubjects(),
+                    fetchDepartments(),
+                ]);
+                if (!mounted) return;
+                setRoles(r.map(it => ({ id: it.id_role, name: it.role })));
+                setSubjects(s.map(it => ({ id: it.id_subject, name: capitalize(it.subject)})));
+                setDepartments(d.map(it => ({ id: it.id_department, name: it.department })));
+            } catch (err) {
+                console.error('Failed to load catalogs', err);
+                setError('Не удалось загрузить справочники');
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
 
-    const handleRoleSelect = (role: { displayText: string }) => {
-        setSelectedRole(role.displayText);
-        setSelectedSubject('');
-        setSelectedDepartment('');
+    const handleRoleSelect = (role: { displayText: string; id?: number }) => {
+        setSelectedRoleId(role.id ?? null);
+        setSelectedRoleLabel(role.displayText);
+        setSelectedSubjectId(null);
+        setSelectedSubjectLabel('');
+        setSelectedDepartmentId(null);
         setError('');
     };
 
-    const handleSubjectSelect = (subject: { displayText: string }) => {
-        setSelectedSubject(subject.displayText);
-        setSelectedDepartment('');
+    const handleSubjectSelect = (subject: { displayText: string; id?: number }) => {
+        setSelectedSubjectId(subject.id ?? null);
+        setSelectedSubjectLabel(subject.displayText);
+        setSelectedDepartmentId(null);
         setError('');
     };
 
-    const handleDepartmentSelect = (department: { displayText: string }) => {
-        setSelectedDepartment(department.displayText);
+    const handleDepartmentSelect = (department: { displayText: string; id?: number }) => {
+        setSelectedDepartmentId(department.id ?? null);
         setError('');
     };
 
     const handleContinue = async () => {
-        if (!selectedRole) {
+        if (!selectedRoleId) {
             setError('Выберите роль');
             return;
         }
 
-        if (selectedRole !== "Асессор ОКК" && !selectedSubject) {
+        if (selectedRoleLabel !== "Асессор ОКК" && !selectedSubjectId) {
             setError('Выберите предмет');
             return;
         }
 
-        if (selectedRole !== "Руководитель предмета" && selectedRole !== "Менеджер чата") {
-            if (!selectedDepartment) {
+        if (selectedRoleLabel !== "Руководитель предмета" && selectedRoleLabel !== "Менеджер чата") {
+            if (!selectedDepartmentId) {
                 setError('Выберите направление');
                 return;
             }
@@ -81,20 +105,25 @@ export default function RegisterSecondPage() {
         try {
             await auth.register({ 
                 ...formData, 
-                role: selectedRole,
-                subject: ["Руководитель предмета", "Менеджер чата"].includes(selectedRole) ? selectedSubject : null,
-                department: selectedRole !== "Асессор ОКК" && !["Руководитель предмета", "Менеджер чата"].includes(selectedRole) ? selectedDepartment : null
+                role_id: selectedRoleId,
+                subject_id: !["Руководитель предмета", "Менеджер чата"].includes(selectedRoleLabel) ? selectedSubjectId : null,
+                department_id: !["Асессор ОКК", "Руководитель предмета", "Менеджер чата"].includes(selectedRoleLabel) ? selectedDepartmentId : null,
+                name: `${formData.first_name} ${formData.last_name}`,
             });
             navigate('/tasktracker');
-        } catch (err: any) {
-            if (err.response?.data?.email) {
-                setError('Пользователь с таким email уже зарегистрирован');
-            } 
-            else if (err.response.status >= 500) {
-                setError('Внутренняя ошибка сервера, повторите позже');
-            }
-            else {
-                setError(err.message || 'Ошибка регистрации');
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                const status = err.response?.status;
+                const data: any = err.response?.data;
+                if (data?.email) {
+                    setError('Пользователь с таким email уже зарегистрирован');
+                } else if (status && status >= 500) {
+                    setError('Внутренняя ошибка сервера, повторите позже');
+                } else {
+                    setError(data?.detail || data?.message || err.message || 'Ошибка регистрации');
+                }
+            } else {
+                setError((err as Error)?.message || 'Ошибка регистрации');
             }
         } finally {
             setIsSubmitting(false);
@@ -109,32 +138,30 @@ export default function RegisterSecondPage() {
                     <h2>Выберите вашу роль</h2>
                     <div className="role-container">
                             <ElasticSearch 
-                            items={roles.map(r => ({
-                                displayText: r
-                            }))}
+                            items={roles.map(r => ({ displayText: r.name, id: r.id }))}
                             placeholder="Введите роль..."
                             backgroundcolor="#F8FAFC"
                             onItemClick={handleRoleSelect}
                         />
-                        {selectedRole && selectedRole !== "Асессор ОКК" && (
+                        {selectedRoleLabel && selectedRoleLabel !== "Асессор ОКК" && (
                             <div style={{marginTop: '10px'}}>
                                 <ElasticSearch 
-                                    items={subjects.map(s => ({ displayText: s }))}
+                                    items={subjects.map(s => ({ displayText: s.name, id: s.id }))}
                                     placeholder="Введите предмет..."
                                     backgroundcolor="#F8FAFC"
                                     onItemClick={handleSubjectSelect}
-                                    key={`subject-${selectedRole}`}
+                                    key={`subject-${selectedRoleLabel}`}
                                 />
                             </div>
                         )}
-                        {selectedSubject && selectedRole !== "Руководитель предмета" && selectedRole !== "Менеджер чата" && (
+                        {selectedSubjectLabel && selectedRoleLabel !== "Руководитель предмета" && selectedRoleLabel !== "Менеджер чата" && (
                             <div style={{marginTop: '10px'}}>
                                 <ElasticSearch 
-                                    items={departments.map(s => ({ displayText: s }))}
+                                    items={departments.map(d => ({ displayText: d.name, id: d.id }))}
                                     placeholder="Введите направление..."
                                     backgroundcolor="#F8FAFC"
-                                    onItemClick={handleSubjectSelect}
-                                    key={`department-${selectedRole}`}
+                                    onItemClick={handleDepartmentSelect}
+                                    key={`department-${selectedRoleId}`}
                                 />
                             </div>
                         )}

@@ -197,6 +197,33 @@
     border: 1px solid transparent;
 }
 
+.registration-container_id_tg {
+    margin-top: -45px;
+    margin-bottom: 5px;
+}
+
+.registration-container_id_tg_input {
+    width: 594px;
+    height: 64px;
+    border: 1px solid #5A5885;
+    display: flex;
+}
+
+.registration-container_id_tg_input_field {
+    border: none;
+    font-size: 18px;
+    line-height: 16px;
+    width: 550px;
+    height: 62px;
+    padding-left: 20px;
+    background-color: #F8FAFC;
+}
+
+.registration-container_id_tg_input_field:focus {
+    outline: none;
+    border: 1px solid transparent;
+}
+
 .registration-container_repeat-password_input_view {
     cursor: pointer;
     margin-top: 20px;
@@ -423,4 +450,9 @@
     width: 192px;
     font-size: 16px;
     line-height: 24px;
+}
+
+.authorization-container_password_error-message {
+    margin-top: 15px;
+    margin-bottom: -40px;
 }

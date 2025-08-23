@@ -1,19 +1,19 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-// import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext';
 import RegistrationLeftPart from '../components/RegistrationLeftPart';
 import '../styles/Register.css';
 
 export default function Authorization() {
-    // const auth = useContext(AuthContext)!;
+    const auth = useContext(AuthContext)!;
     const navigate = useNavigate();
     const [form, setForm] = useState({ email: '', password: '' });
     const [error, setError] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // if (!auth.loading && auth.user) {
-    //     return <Navigate to="/home" replace />;
-    // }
+    if (!auth.loading && auth.user) {
+        return <Navigate to="/tasktracker" replace />;
+    }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,14 +22,17 @@ export default function Authorization() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // try {
-        //     await auth.login(form.email, form.password);
-        //     navigate('/home');
-        // } catch {
-        //     setError('Неверный email или пароль');
-        // } finally {
-        //     setIsSubmitting(false);
-        // }
+        try {
+            await auth.login(form.email, form.password);
+            navigate('/home');
+        } catch (err: any) {
+            if (err.response.status === 401)
+                setError('Неверный email или пароль');
+            else if (err.response.status >= 500)
+                setError('Внутренняя ошибка сервера. Попробуйте позже')
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -43,12 +46,13 @@ export default function Authorization() {
                     <h3>Email</h3>
                     <div className="authorization-container_email_input">
                         <input
-                            type="text"
+                            type="email"
                             name="email"
                             value={form.email}
                             onChange={handleChange}
                             className="authorization-container_email_input_field"
                             placeholder="Введите email или номер телефона"
+                            required
                         />
                         <img
                             className="authorization-container_email_input_faceicon"
@@ -68,6 +72,7 @@ export default function Authorization() {
                             onChange={handleChange}
                             className="authorization-container_password_input_field"
                             placeholder="Введите пароль"
+                            required
                         />
                         <img
                             className="authorization-container_email_input_faceicon"
