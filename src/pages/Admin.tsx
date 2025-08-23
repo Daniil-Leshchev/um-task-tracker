@@ -1,30 +1,70 @@
 import Header from "../components/Header";
 import "../styles/Admin.css";
 import ElasticSearch from "../components/ElasticSearch";
-import { users } from "../data/users";
-import { useState } from 'react';
+import { fetchAdminListUsers, confirmUser, deleteUser, fetchMentorsForAssignment, assignMentor, MentorShort } from "../api/users";
+import { useState, useContext, useEffect } from 'react';
+import { AuthContext } from "../context/AuthContext";
+import { Navigate } from "react-router-dom";
+import type { AdminListUser as User } from "../api/users";
+import capitalize from "../utils/capitalize";
+import getInitials from "../utils/getInitials";
+import getAvatarColor from "../utils/getAvatarColor";
 
-interface User {
+interface AdminListUserItem {
     id: number;
+    displayText: string;
     name: string;
-    surname: string;
-    role: string;
     initials: string;
     color: string;
-    subject?: string;
-    confirm?: string;
-    nameMentor?: string | null;
+    role: string;
+    isManager: boolean;
+    subject: string;
+    department: string;
+    needConfirmation: boolean;
+    mentorName: string | null;
 }
 
 export default function Admin() {
+    const auth = useContext(AuthContext)!;
+    const user = auth.user;
     const [lastUpdated, setLastUpdated] = useState("");
-    const [selectedUser, setselectedUser] = useState<User | null>(null);
+    const [selectedUser, setselectedUser] = useState<AdminListUserItem | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isUserConfirmed, setIsUserConfirmed] = useState(false);
     const [selectedMentor, setSelectedMentor] = useState<User | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [adminUsers, setAdminListUsers] = useState<User[]>([]);
+    const [mentorsForSelected, setMentorsForSelected] = useState<MentorShort[]>([]);
+    const [loadingMentors, setLoadingMentors] = useState(false);
 
-    const mentors = users.filter(user => user.role.toLowerCase().includes("наставник"));
- 
+    const refreshUsers = async () => {
+        const data = await fetchAdminListUsers();
+        setAdminListUsers(data);
+    };
+
+    useEffect(() => {
+        refreshUsers();
+    }, []);
+
+
+    const items: AdminListUserItem[] = adminUsers.map(u => ({
+        id: u.id_tg,
+        displayText: `${u.name} (${u.role})`,
+        name: u.name,
+        initials: getInitials(u.name),
+        color: getAvatarColor(u.id_tg),
+        role: u.role,
+        isManager: u.is_manager,
+        subject: u.subject,
+        department: u.department,
+        needConfirmation: u.need_confirmation,
+        mentorName: u.mentor_name,
+    }));
+
+    if (!auth.loading && !user.is_admin) {
+        return <Navigate to="/tasktracker" replace />;
+    }
+
     const updateTimestamp = () => {
         const now = new Date();
         const timeString = now.toLocaleTimeString("ru-RU", {
@@ -39,36 +79,66 @@ export default function Admin() {
         updateTimestamp();
     };
 
-    const handleEditClick = (user) => {
+    const handleEditClick = async (user: AdminListUserItem) => {
+        setIsUserConfirmed(false);
         setselectedUser(user);
         setIsModalOpen(true);
+
+        setLoadingMentors(true);
+        try {
+            const mentors = await fetchMentorsForAssignment({ target_id_tg: user.id });
+            setMentorsForSelected(mentors);
+        } finally {
+            setLoadingMentors(false);
+        }
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedMentor(null);
+        setIsUserConfirmed(false);
     };
 
-    const deleteUser = () => {
-        // Сюда нужна логика удаления из БД
+    const handleDeleteUser = async () => {
+        if (!selectedUser) return;
+        try {
+            setIsDeleting(true);
+            await deleteUser(selectedUser.id);
+            setAdminListUsers(prev => prev.filter(u => u.id_tg !== selectedUser.id));
+            closeModal();
+        } catch (err) {
+        } finally {
+            setIsDeleting(false);
+        }
         closeModal()
     }
 
-    const handleConfirm = () => {
-        // Сюда нужна логика подтверждения юзера в БД
-        setIsUserConfirmed(true)
-        if (selectedMentor || (selectedUser?.role && (selectedUser.role.toLowerCase().includes('наставник') || !selectedUser.role.toLowerCase().includes('куратор')))) {
-            setSelectedMentor(null);
+    const handleConfirm = async () => {
+        if (!selectedUser) return;
+
+        if (!selectedUser.needConfirmation) {
+            closeModal();
+            return;
+        }
+        try {
+            setIsUserConfirmed(true);
+            await confirmUser(selectedUser.id);
+            await refreshUsers();
+        } catch (e) {
+        } finally {
             setIsUserConfirmed(false);
             closeModal();
         }
     };
 
-    const handleMentorSelect = (mentor: User) => {
-        setSelectedMentor(mentor);
-        if (isUserConfirmed) {
-            setIsUserConfirmed(false)
-            closeModal()
+    const handleMentorSelect = async (mentor: MentorShort) => {
+        if (!selectedUser) return;
+        try {
+            await assignMentor((selectedUser as AdminListUserItem).id, mentor.id_tg);
+            await refreshUsers();
+            setSelectedMentor(mentor as any);
+            closeModal();
+        } catch (e) {
         }
     };
 
@@ -79,32 +149,21 @@ export default function Admin() {
                 <h1>Все пользователи</h1>
                 <div className="elastic-container">
                     <ElasticSearch
-                        items={users.map(user => ({
-                            id: user.id.toString(),
-                            displayText: `${user.name} ${user.surname} (${user.role})`,
-                            name: `${user.name} ${user.surname}`,
-                            initials: user.initials,
-                            color: user.color,
-                            role: user.role,
-                            subject: user.subject,
-                            department: user.department,
-                            confirm: user.confirm,
-                            nameMentor: user.nameMentor
-                        }))}
+                        items={items}
                         backgroundcolor="inherit"
                         placeholder="Поиск куратора..."
                         keepListVisible={true}
                         disableInputCapture={true}
-                        renderItem={(item) => (
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
+                        renderItem={(item: AdminListUserItem) => (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
                                 padding: '8px',
                                 borderRadius: '4px',
                                 paddingRight: '30px'
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginRight: 'auto'}}>
-                                    <div 
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginRight: 'auto' }}>
+                                    <div
                                         style={{
                                             width: '42px',
                                             height: '42px',
@@ -120,19 +179,19 @@ export default function Admin() {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <div>{item.name}</div>
-                                        <div style={{ fontSize: '0.8em', color: '#666' }}>{item.subject}, {item.role}, {item.department}</div>
+                                        <div style={{ fontSize: '0.8em', color: '#666' }}>{capitalize(item.subject || '')}, {item.role}, {item.department || ''}</div>
                                     </div>
                                 </div>
-                                {item.confirm === "True" && item.nameMentor !== null && (
+                                {!item.needConfirmation && item.mentorName && (
                                     <span style={{
                                         fontSize: '0.7em',
                                         fontWeight: 'bold',
                                         marginRight: '20px'
                                     }}>
-                                        Наставник: {item.nameMentor}
+                                        Наставник: {item.mentorName}
                                     </span>
                                 )}
-                                {item.confirm === "False" && (
+                                {item.needConfirmation && (
                                     <span style={{
                                         color: '#ff6b6b',
                                         fontSize: '0.7em',
@@ -142,7 +201,7 @@ export default function Admin() {
                                         Требуется подтверждение
                                     </span>
                                 )}
-                                <button 
+                                <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleEditClick(item);
@@ -179,52 +238,56 @@ export default function Admin() {
                         <div className="modal-body">
                             <div className="modal-section">
                                 <p className="confirmation-text">Вы хотите оставить профиль «{selectedUser.name}»?</p>
-                                
+
                                 <div className="action-buttons">
-                                    <button 
+                                    <button
                                         className="confirm-button"
                                         onClick={handleConfirm}
-                                        style={{backgroundColor: isUserConfirmed ? '#4abc50ff' : '#15bf7ef7',}}
+                                        style={{ backgroundColor: isUserConfirmed ? '#4abc50ff' : '#15bf7ef7', }}
                                     >
                                         Да
                                     </button>
-                                    <button 
+                                    <button
                                         className="cancel-button"
-                                        onClick={deleteUser}
+                                        onClick={handleDeleteUser}
                                         disabled={isUserConfirmed}
-                                        style={{cursor: isUserConfirmed ? 'not-allowed' : 'pointer'}}
+                                        style={{ cursor: (isUserConfirmed || isDeleting) ? 'not-allowed' : 'pointer' }}
                                     >
                                         Нет
                                     </button>
                                 </div>
                             </div>
-                            {selectedUser.role && (selectedUser.role.toLowerCase().includes('куратор')) && (!selectedUser.role.toLowerCase().includes('наставник')) && (
+                            {!selectedUser.isManager && (
                                 <div className="modal-section">
                                     <p className="mentor-select">Определите наставника для куратора:</p>
                                     <ElasticSearch
-                                        items={mentors.map(mentor => ({
-                                            id: mentor.id.toString(),
-                                            displayText: `${mentor.name} ${mentor.surname}`,
-                                            name: `${mentor.name} ${mentor.surname}`,
-                                            role: mentor.role,
-                                            initials: mentor.initials,
-                                            color: mentor.color,
-                                            subject: mentor.subject
+                                        items={mentorsForSelected.map(m => ({
+                                            id: m.id_tg,
+                                            displayText: m.name,
+                                            name: m.name,
+                                            role: m.role,
+                                            initials: getInitials(m.name),
+                                            color: getAvatarColor(m.id_tg),
+                                            subject: m.subject ?? '',
                                         }))}
                                         backgroundcolor="white"
                                         placeholder="Введите имя наставника..."
-                                        onItemClick={(item) => handleMentorSelect(mentors.find(m => m.id.toString() === item.id)!)}
+                                        keepListVisible={true}
+                                        onItemClick={(item) => {
+                                            const m = mentorsForSelected.find(mm => mm.id_tg === item.id);
+                                            if (m) handleMentorSelect(m);
+                                        }}
                                         renderItem={(item) => (
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
                                                 padding: '8px',
                                                 borderRadius: '4px',
                                                 justifyContent: 'space-between',
                                                 paddingRight: '30px'
                                             }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px'}}>
-                                                    <div 
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <div
                                                         style={{
                                                             width: '42px',
                                                             height: '42px',
@@ -240,7 +303,7 @@ export default function Admin() {
                                                     </div>
                                                     <div style={{ flex: 1 }}>
                                                         <div>{item.name}</div>
-                                                        <div style={{ fontSize: '0.8em', color: '#666' }}>{item.subject}, {item.role}</div>
+                                                        <div style={{ fontSize: '0.8em', color: '#666' }}>{capitalize(item.subject || '')}, {item.role}</div>
                                                     </div>
                                                 </div>
                                             </div>
