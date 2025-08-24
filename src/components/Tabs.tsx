@@ -1,14 +1,22 @@
 import '../styles/Tabs.css';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import CreateTaskModal from './FormModal';
+import { AuthContext } from '../context/AuthContext';
 
 const Tabs = ({ activeTab, onTabChange }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const auth = useContext(AuthContext)!;
+    const isConfirmed = !auth.loading && auth.user?.is_confirmed;
     const tabs = [
         { id: 'groupCards', label: 'Групповые задачи' },
         { id: 'individualCards', label: 'Индивидуальные задачи' },
         { id: 'table', label: 'Таблица' }
     ];
+
+    const handleOpenModal = () => {
+        if (!isConfirmed) return;
+        setIsModalOpen(true);
+    };
 
     const handleCreateTask = (newTask) => {
         console.log('Новая задача:', newTask);
@@ -27,7 +35,12 @@ const Tabs = ({ activeTab, onTabChange }) => {
                 </button>
             ))}
             </div>
-            <button className='createTask' onClick={() => setIsModalOpen(true)}>
+            <button
+                className='createTask'
+                onClick={handleOpenModal}
+                disabled={!isConfirmed}
+                title={!isConfirmed ? 'Профиль не подтвержден: подтвердите аккаунт у руководителя' : ''}
+            >
                 Создать задачу
             </button>
             

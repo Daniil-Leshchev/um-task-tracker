@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ElasticSearch from './ElasticSearch';
 import '../styles/FormModal.css';
-import {subjects, departments} from "../data/dataRegister";
-import { users } from "../data/users";
+import { fetchSubjects, fetchDepartments } from '../api/catalogs';
+import { fetchAssignmentPolicy, fetchAssignableCurators, type AssignableCurator, type AssignmentPolicy } from '../api/assignment';
+import getInitials from "../utils/getInitials";
+import getAvatarColor from "../utils/getAvatarColor";
+import capitalize from '../utils/capitalize'
 
 type CuratorGroup = 'senior' | 'personal' | 'standard' | 'specific';
-type SpecificCurator = string;
 
 interface TaskData {
   title: string;
@@ -16,7 +18,7 @@ interface TaskData {
   department: string;
   assignedTo: {
     groups: CuratorGroup[];
-    specificCurator: SpecificCurator | null;
+    specificCurator: string | null;
   };
 }
 
@@ -33,68 +35,247 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState('');
   const [reportFormat, setReportFormat] = useState('');
-  const [subject, setSubject] = useState('');
-  const [department, setDepartment] = useState('');
   const [selectedGroups, setSelectedGroups] = useState<CuratorGroup[]>([]);
-  const [specificCurator, setSpecificCurator] = useState('');
-  const [selectedCurators, setSelectedCurators] = useState<string[]>([]);
+  const [selectedCurators, setSelectedCurators] = useState<number[]>([]);
 
-const curators = users.filter(user => 
-    user.role.includes('куратор')
-  );
+  const [subjectId, setSubjectId] = useState<number | null>(null);
+  const [departmentIds, setDepartmentIds] = useState<number[]>([]);
+  const [subjectsList, setSubjectsList] = useState<{ id_subject: number; subject: string; }[]>([]);
+  const [departmentsList, setDepartmentsList] = useState<{ id_department: number; department: string; }[]>([]);
+
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '');
+  const findBy = (pred: (name: string) => boolean) =>
+    departmentsList.find(d => pred(norm(d.department)))?.id_department;
+
+  const ogeId = findBy(name => name.includes('огэ'));
+  const tenId = findBy(name => name.includes('10кл'));
+
+  const departmentItems: Array<{ id: number; displayText: string; ids?: number[] }> = (() => {
+    const base = departmentsList
+      .filter(d => norm(d.department) !== 'окк')
+      .filter(d => {
+        const n = norm(d.department);
+        const isOGE = n.includes('огэ');
+        const isTen = n.includes('10класс') || n.includes('10кл') || n === '10';
+        return !isOGE && !isTen;
+      })
+      .map(d => ({ id: d.id_department, displayText: d.department }));
+
+    if (ogeId && tenId) {
+      return [{ id: ogeId, displayText: 'ОГЭ/10кл', ids: [ogeId, tenId] }, ...base];
+    }
+    return base;
+  })();
+
+  const [assignable, setAssignable] = useState<AssignableCurator[]>([]);
+  const [assignableLoading, setAssignableLoading] = useState(false);
+
+  const [policy, setPolicy] = useState<AssignmentPolicy | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
+
+  const isOKK = policy?.defaults?.role_id === 8;
 
 
-  const curatorGroups = [
-    { id: 'senior', label: 'Старшие кураторы' },
-    { id: 'personal', label: 'Личные кураторы' },
-    { id: 'standard', label: 'Стандарт-кураторы' },
-    { id: 'specific', label: 'Конкретный куратор' }
-  ] as const;;
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setPolicyLoading(true);
+        const p = await fetchAssignmentPolicy();
+        if (!cancelled) setPolicy(p);
+      } catch {
+        if (!cancelled) setPolicy(null);
+      } finally {
+        if (!cancelled) setPolicyLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [subs, deps] = await Promise.all([
+          fetchSubjects(),
+          fetchDepartments(),
+        ]);
+        if (!cancelled) {
+          setSubjectsList(subs);
+          setDepartmentsList(deps);
+        }
+      } catch {
+        if (!cancelled) {
+          setSubjectsList([]);
+          setDepartmentsList([]);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !policy) return;
+
+    if (isOKK) {
+      setSelectedGroups(['specific']);
+    } else {
+      setSelectedGroups([]);
+    }
+    if (policy) {
+      if (policy.can_pick_subject === false) setSubjectId(policy.defaults?.subject_id ?? null);
+      if (policy.can_pick_department === false) {
+        const defDept = policy.defaults?.department_id;
+        setDepartmentIds(typeof defDept === 'number' ? [defDept] : []);
+      }
+    }
+  }, [isOpen, policy, isOKK]);
+
+  useEffect(() => {
+    if (!isOpen || !policy) return;
+    if (!selectedGroups.includes('specific')) return;
+
+    const subj =
+      isOKK
+        ? undefined
+        : (policy.can_pick_subject === false
+            ? (policy?.defaults?.subject_id ?? undefined)
+            : (subjectId ?? undefined));
+
+    let deptIds: number[] = [];
+    if (!isOKK) {
+      if (policy.can_pick_department === false) {
+        const def = policy?.defaults?.department_id;
+        if (typeof def === 'number') deptIds = [def];
+      } else {
+        deptIds = departmentIds;
+      }
+    }
+
+    const roleIds =
+      policy.allowed_recipient_role_ids && policy.allowed_recipient_role_ids.length
+        ? policy.allowed_recipient_role_ids
+        : undefined;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setAssignableLoading(true);
+
+        if (deptIds.length === 0) {
+          const data = await fetchAssignableCurators({
+            subject_id: subj,
+            department_id: undefined,
+            role_ids: roleIds,
+          });
+          if (!cancelled) setAssignable(data);
+          return;
+        }
+
+        const chunks = await Promise.all(
+          deptIds.map(did =>
+            fetchAssignableCurators({
+              subject_id: subj,
+              department_id: did,
+              role_ids: roleIds,
+            })
+          )
+        );
+        const merged = new Map<number, AssignableCurator>();
+        for (const arr of chunks) {
+          for (const c of arr) merged.set(c.id_tg, c);
+        }
+        if (!cancelled) setAssignable(Array.from(merged.values()));
+      } catch {
+        if (!cancelled) setAssignable([]);
+      } finally {
+        if (!cancelled) setAssignableLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [isOpen, policy, selectedGroups, subjectId, departmentIds, isOKK, ogeId, tenId]);
+
+
+  const ROLE_ID_TO_GROUP: Record<number, CuratorGroup> = {
+    1: 'standard',
+    2: 'senior',
+    3: 'personal',
+  };
+
+  const filteredCuratorGroups = (() => {
+    if (isOKK) {
+      return ([{ id: 'specific', label: 'Конкретный куратор' }] as const);
+    }
+
+    const base = [
+      { id: 'senior',   label: 'Старшие кураторы' },
+      { id: 'personal', label: 'Личные кураторы' },
+      { id: 'standard', label: 'Стандарт-кураторы' },
+    ] as const;
+
+    const allowedSet = new Set(
+      (policy?.allowed_recipient_role_ids || [])
+        .map((rid) => ROLE_ID_TO_GROUP[rid])
+        .filter(Boolean) as CuratorGroup[]
+    );
+
+    const result = base.filter((g) =>
+      allowedSet.size ? allowedSet.has(g.id as CuratorGroup) : true
+    );
+
+    return ([...result, { id: 'specific', label: 'Конкретный куратор' }] as const);
+  })();
 
   if (!isOpen) return null;
 
-  const handleSubmitStep1 = (e) => {
+  const handleSubmitStep1 = (e: React.FormEvent) => {
     e.preventDefault();
     setStep(2);
   };
 
-    const handleSubmitStep2 = (e: React.FormEvent) => {
+  const handleSubmitStep2 = (e: React.FormEvent) => {
     e.preventDefault();
+    const departmentLabel =
+      (departmentIds.length === 2 && ((departmentIds.includes(ogeId || -1)) && (departmentIds.includes(tenId || -1))))
+        ? 'ОГЭ/10кл'
+        : (departmentsList.find(d => d.id_department === departmentIds[0])?.department || '');
     const newTask: TaskData = {
-        title,
-        description,
-        deadline: new Date(deadline).getTime(),
-        reportFormat,
-        subject,
-        department,
-        assignedTo: {
+      title,
+      description,
+      deadline: new Date(deadline).getTime(),
+      reportFormat,
+      subject: subjectsList.find(s => s.id_subject === subjectId)?.subject || '',
+      department: departmentLabel,
+      assignedTo: {
         groups: selectedGroups,
-        specificCurator: selectedGroups.includes('specific') 
-            ? selectedCurators.join(', ') 
-            : null
-        }
+        specificCurator: selectedGroups.includes('specific')
+          ? selectedCurators.join(', ')
+          : null
+      }
     };
     onCreate(newTask);
     resetForm();
     onClose();
-    };
+  };
 
   const resetForm = () => {
     setTitle('');
     setDescription('');
     setDeadline('');
     setReportFormat('');
-    setSubject('');
-    setDepartment('');
+    setSubjectId(null);
+    setDepartmentIds([]);
     setSelectedGroups([]);
-    setSpecificCurator('');
     setStep(1);
   };
 
-  const handleCuratorSelect = (curatorId: string) => {
-    setSelectedCurators(prev => 
-      prev.includes(curatorId) 
-        ? prev.filter(id => id !== curatorId) 
+  const handleCuratorSelect = (curatorId: number) => {
+    setSelectedCurators(prev =>
+      prev.includes(curatorId)
+        ? prev.filter(id => id !== curatorId)
         : [...prev, curatorId]
     );
   };
@@ -189,44 +370,51 @@ const curators = users.filter(user =>
         ) : (
           <form onSubmit={handleSubmitStep2} className="task-form">
             <div className="subject-selection">
-              <h3>Выберите предмет:</h3>
-              
-              <div className="form-group_elastic">
-                <ElasticSearch
-                  items={subjects.map(s => ({ displayText: s }))}
-                  backgroundcolor="white"
-                  placeholder="Поиск предмета..."
-                  onItemClick={(item) => setSubject(item.displayText)}
-                />
-              </div>
-              <h3>Выберите направление:</h3>
-
-              <div className="form-group_elastic">
-                <ElasticSearch
-                  items={departments.map(s => ({ displayText: s }))}
-                  backgroundcolor="white"
-                  placeholder="Поиск направления..."
-                  onItemClick={(item) => setDepartment(item.displayText)}
-                />
-              </div>
+              {(policy?.can_pick_subject ?? true) && (
+                <>
+                  <h3>Выберите предмет:</h3>
+                  <div className="form-group_elastic">
+                    <ElasticSearch
+                      items={subjectsList.map(s => ({ id: s.id_subject, displayText: capitalize(s.subject) }))}
+                      backgroundcolor="white"
+                      placeholder={policyLoading ? 'Загрузка...' : 'Поиск предмета...'}
+                      onItemClick={(item) => setSubjectId(item.id as number)}
+                    />
+                  </div>
+                </>
+              )}
+              {(policy?.can_pick_department ?? true) && (
+                <>
+                  <h3>Выберите направление:</h3>
+                  <div className="form-group_elastic">
+                    <ElasticSearch
+                      items={departmentItems}
+                      backgroundcolor="white"
+                      placeholder={policyLoading ? 'Загрузка...' : 'Поиск направления...'}
+                      onItemClick={(item) => {
+                        const ids = (item as any).ids as number[] | undefined;
+                        setDepartmentIds(ids ? ids : [item.id as number]);
+                      }}
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="curator-selection">
                 <h3>Выберите, кому назначить задачу:</h3>
-                
+
                 <div className="curator-options">
-                  {curatorGroups.map(group => (
+                  {filteredCuratorGroups.map(group => (
                     <div key={group.id} className="curator-option">
                       <label>
                         <input
                           type="checkbox"
-                          checked={selectedGroups.includes(group.id)}
-                          onChange={() => handleGroupToggle(group.id)}
+                          checked={isOKK ? group.id === 'specific' : selectedGroups.includes(group.id)}
+                          onChange={() => (isOKK ? null : handleGroupToggle(group.id))}
                           disabled={
-                            group.id !== 'specific' && 
-                            selectedGroups.includes('specific') ||
-                            group.id === 'specific' && 
-                            selectedGroups.length > 0 && 
-                            !selectedGroups.includes('specific')
+                            isOKK ||
+                            (group.id !== 'specific' && selectedGroups.includes('specific')) ||
+                            (group.id === 'specific' && selectedGroups.length > 0 && !selectedGroups.includes('specific'))
                           }
                         />
                         {group.label}
@@ -240,29 +428,29 @@ const curators = users.filter(user =>
                     <h3>Выберите куратора(ов):</h3>
                     <div>
                       <ElasticSearch
-                        items={curators.map(curator => ({
-                          id: curator.id.toString(),
-                          displayText: `${curator.name} ${curator.surname} (${curator.role})`,
-                          name: `${curator.name} ${curator.surname}`,
-                          initials: curator.initials,
-                          color: curator.color,
-                          role: curator.role
+                        items={assignable.map((c: AssignableCurator) => ({
+                          id: c.id_tg,
+                          displayText: `${c.name} (${c.role_name})`,
+                          name: c.name,
+                          initials: getInitials(c.name),
+                          color: getAvatarColor(c.id_tg),
+                          role: c.role_name,
                         }))}
                         backgroundcolor="white"
-                        placeholder="Поиск куратора..."
+                        placeholder={assignableLoading ? 'Загрузка...' : 'Поиск куратора...'}
                         isMultiSelect={true}
                         selectedItems={selectedCurators}
                         keepListVisible={true}
                         disableInputCapture={true}
                         renderItem={(item) => (
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: '15px',
                             padding: '8px',
                             borderRadius: '4px'
                           }}>
-                            <div 
+                            <div
                               style={{
                                 width: '42px',
                                 height: '42px',
@@ -290,17 +478,22 @@ const curators = users.filter(user =>
               </div>
 
               <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="cancel-btn" 
+                <button
+                  type="button"
+                  className="cancel-btn"
                   onClick={() => setStep(1)}
                 >
                   Назад
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="submit-btn"
-                  disabled={selectedGroups.length === 0 || !subject || !department || (selectedGroups.includes('specific') && selectedCurators.length === 0)}
+                  disabled={
+                    selectedGroups.length === 0 ||
+                    (((policy?.can_pick_subject ?? true) && subjectId === null) ||
+                      ((policy?.can_pick_department ?? true) && departmentIds.length === 0)) ||
+                    (selectedGroups.includes('specific') && selectedCurators.length === 0)
+                  }
                 >
                   Создать задачу
                 </button>

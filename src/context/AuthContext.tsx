@@ -10,6 +10,7 @@ export interface User {
     role: string;
     department: string;
     is_admin: boolean;
+    is_confirmed: boolean;
 }
 
 interface AuthContextValue {

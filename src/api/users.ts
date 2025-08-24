@@ -20,7 +20,7 @@ export interface AdminListUser {
 export async function updateUserProfile(
   data: UserProfileUpdate
 ): Promise<void> {
-  await api.patch("/users/me/update/", data);
+  await api.patch('/users/me/update/', data);
 }
 
 export async function fetchAdminListUsers(): Promise<AdminListUser[]> {

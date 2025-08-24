@@ -66,3 +66,16 @@
         text-align: center;
     }
 }
+
+.createTask:disabled,
+.createTask[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #d1d5db;
+    color: #6b7280;
+    box-shadow: none;
+}
+
+.createTask:disabled:hover {
+    background-color: #d1d5db;
+}
