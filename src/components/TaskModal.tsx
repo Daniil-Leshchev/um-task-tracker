@@ -223,7 +223,7 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                                                             </div>
                                                         </div>
                                                         {isTaskCompleted(item.status) && (
-                                                            <Link to={`/reports/${task.id}/${item.id}`}>
+                                                            <Link to={`tasks/reports/${task.id}/${item.id}`}>
                                                                 <button className="curator-view-btn">
                                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -270,7 +270,7 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                                                 </div>
                                             </div>
                                             {isTaskCompleted(curator.status) && (
-                                                <Link to={`/reports/${task.id}/${curator.id_tg}`}>
+                                                <Link to={`tasks/reports/${task.id}/${curator.id_tg}`}>
                                                     <button className="curator-view-btn">
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />

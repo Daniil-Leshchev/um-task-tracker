@@ -62,3 +62,20 @@ export async function fetchTaskDetails(taskId: string): Promise<TaskDetail[]> {
     const { data } = await api.get<TaskDetail[]>(`/tasks/${taskId}/`);
     return data;
 }
+
+export type Report = {
+    id_report: number;
+    curator: string;
+    role: string;
+    task: string;
+    status: 'completed' | 'completed_late' | 'not_completed';
+    completedAt: string | null;
+    deadline: string;
+    reportUrl: string | null;
+    reportText: string | null;
+};
+
+export async function fetchReport(taskId: string, curatorId: string): Promise<Report> {
+    const { data } = await api.get<Report>(`/tasks/reports/${encodeURIComponent(taskId)}/${curatorId}/`);
+    return data;
+}

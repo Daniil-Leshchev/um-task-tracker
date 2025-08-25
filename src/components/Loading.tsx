@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
-import { tasks } from "../data/tasks";
 import "../styles/Loading.css"
 
 export default function Loading() {
-    const [filteredTasks, setFilteredTasks] = useState(tasks);
     const [lastUpdated, setLastUpdated] = useState("");
     
     useEffect(() => {
@@ -23,7 +21,6 @@ export default function Loading() {
     
     const handleRefresh = () => {
         updateTimestamp();
-        setFilteredTasks([...tasks]);
     };
     return (
         <>

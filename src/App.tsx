@@ -33,7 +33,7 @@ export default function App() {
             <Route path="/registerSecondPage" element={<RegisterSecondPage />} />
             <Route element={<ProtectedRoute> <Outlet/></ProtectedRoute>}>
                 <Route path="/tasktracker" element={<TaskTracker />} />
-                <Route path="/reports/:taskId/:curatorId" element={<ReportTutor />} />
+                <Route path="tasktracker/tasks/reports/:taskId/:curatorId" element={<ReportTutor />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             </Route>
