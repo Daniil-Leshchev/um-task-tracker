@@ -1,25 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar from './Avatar';
 import ProgressCircle from './ProgressCircle';
 import ElasticSearch from './ElasticSearch';
 import '../styles/TaskModal.css';
+import { type TaskCard, fetchTaskDetails, type TaskDetail } from '../api/tasks';
+import getInitials from '../utils/getInitials'
+import getAvatarColor from '../utils/getAvatarColor'
+import { formatDateTime } from '../pages/TaskTracker';
 
-const TaskModal = ({ task, isOpen, onClose }) => {
+type Props = {
+    task: TaskCard | null;
+    isOpen: boolean;
+    onClose: () => void;
+};
+const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
     const [filterType, setFilterType] = useState('all');
+    const [curators, setCurators] = useState<TaskDetail[]>([]);
+    const [loadingCurators, setLoadingCurators] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen || !task?.id) {
+            setCurators([]);
+            return;
+        }
+        let isMounted = true;
+        setLoadingCurators(true);
+        fetchTaskDetails(task.id)
+            .then(data => {
+                if (isMounted) {
+                    setCurators(data);
+                    setLoadingCurators(false);
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setCurators([]);
+                    setLoadingCurators(false);
+                }
+            });
+        return () => {
+            isMounted = false;
+        };
+    }, [isOpen, task?.id]);
 
     if (!isOpen || !task) return null;
 
-    const formatDateTime = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toLocaleString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+    const allCurators = curators ?? [];
 
     const getStatusBadge = (status) => {
         switch (status) {
@@ -34,14 +61,13 @@ const TaskModal = ({ task, isOpen, onClose }) => {
         }
     };
 
-    const allCurators = task.curators;
-    const completedCurators = task.curators.filter(curator =>
+    const completedCurators = allCurators.filter(curator =>
         curator.status === 'completed'
     );
-    const completedLateCurators = task.curators.filter(curator =>
+    const completedLateCurators = allCurators.filter(curator =>
         curator.status === 'completed_late'
     );
-    const notCompletedCurators = task.curators.filter(curator =>
+    const notCompletedCurators = allCurators.filter(curator =>
         curator.status === 'not_completed'
     );
 
@@ -54,7 +80,7 @@ const TaskModal = ({ task, isOpen, onClose }) => {
             case 'completed_late':
                 return completedLateCurators;
             default:
-                return task.curators;
+                return allCurators;
         }
     };
 
@@ -89,10 +115,10 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                     <span className="task-info-label">Статус:</span>
                                     <span className="task-status-badge">{task.status}</span>
                                 </div>
-                                
+
                                 <div className="task-info-item">
                                     <span className="task-info-label">Создано:</span>
-                                    <span className="task-info-value">{formatDateTime(task.created)}</span>
+                                    <span className="task-info-value">{task.created}</span>
                                 </div>
 
                                 <div className="task-info-item">
@@ -102,7 +128,7 @@ const TaskModal = ({ task, isOpen, onClose }) => {
 
                                 <div className="task-info-item">
                                     <span className="task-info-label">Дедлайн:</span>
-                                    <span className="task-info-value">{formatDateTime(task.deadline)}</span>
+                                    <span className="task-info-value">{task.deadline}</span>
                                 </div>
                             </div>
                         </div>
@@ -112,13 +138,15 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                         <span className="task-info-value">{task.description}</span>
                     </div>
 
-                    <div className="task-info-item-last">
-                        <span className="task-info-label">Отчет: </span>
-                        <span className="task-info-value">{task.report}</span>
-                    </div>
+                    {(task as any)?.report && (
+                        <div className="task-info-item-last">
+                            <span className="task-info-label">Отчет: </span>
+                            <span className="task-info-value">{(task as any).report}</span>
+                        </div>
+                    )}
 
                     <div className="curators-section">
-                        <h3>Кураторы ({task.curators.length})</h3>
+                        <h3>Кураторы ({allCurators.length})</h3>
 
                         <div className="curator-filter-tabs">
                             <button
@@ -147,23 +175,29 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                             </button>
                         </div>
 
-                        {filterType === 'all' ? (
+                        {loadingCurators && (
+                            <div className="loading-placeholder" style={{ padding: '1rem', textAlign: 'center' }}>
+                                Загрузка кураторов...
+                            </div>
+                        )}
+
+                        {!loadingCurators && (filterType === 'all' ? (
                             <div className="curators-grouped">
                                 {allCurators.length > 0 && (
                                     <div className="curator-group">
                                         <div className="curator-group-content">
                                             <ElasticSearch
                                                 items={allCurators.map(c => ({
-                                                    id: c.id,
+                                                    id: c.id_tg,
                                                     displayText: c.name,
                                                     name: c.name,
-                                                    initials: c.initials,
-                                                    color: c.color,
+                                                    initials: getInitials(c.name),
+                                                    color: getAvatarColor(c.id_tg),
                                                     role: c.role,
                                                     status: c.status,
                                                     completedAt: c.completedAt
                                                 }))}
-                                                backgroundcolor = 'white'
+                                                backgroundcolor='white'
                                                 renderItem={(item) => (
                                                     <div key={item.id} className="curator-card">
                                                         <Avatar
@@ -174,26 +208,26 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                                                         />
                                                         <div className="curator-info">
                                                             <div className="curator-name-type">
-                                                            <span className="curator-name">{item.name}</span>
-                                                            <span className="curator-type">{item.role}</span>
+                                                                <span className="curator-name">{item.name}</span>
+                                                                <span className="curator-type">{item.role}</span>
                                                             </div>
                                                             <div className="curator-status-row">
-                                                            <span className={`curator-status ${getStatusBadge(item.status).className}`}>
-                                                                {getStatusBadge(item.status).text}
-                                                            </span>
-                                                            {item.completedAt && (
-                                                                <span className="curator-completion-date">
-                                                                {formatDateTime(item.completedAt)}
+                                                                <span className={`curator-status ${getStatusBadge(item.status).className}`}>
+                                                                    {getStatusBadge(item.status).text}
                                                                 </span>
-                                                            )}
+                                                                {item.completedAt && (
+                                                                    <span className="curator-completion-date">
+                                                                        {formatDateTime(item.completedAt)}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         {isTaskCompleted(item.status) && (
                                                             <Link to={`/reports/${task.id}/${item.id}`}>
                                                                 <button className="curator-view-btn">
                                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                                    <circle cx="12" cy="12" r="3" />
+                                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                                        <circle cx="12" cy="12" r="3" />
                                                                     </svg>
                                                                 </button>
                                                             </Link>
@@ -207,42 +241,49 @@ const TaskModal = ({ task, isOpen, onClose }) => {
                             </div>
                         ) : (
                             <div className="curators-filtered">
-                                {filteredCurators.map(curator => (
-                                    <div key={curator.id} className="curator-card">
-                                        <Avatar
-                                            name={curator.name}
-                                            initials={curator.initials}
-                                            color={curator.color}
-                                            size={40}
-                                        />
-                                        <div className="curator-info">
-                                            <div className="curator-name-type">
-                                                <span className="curator-name">{curator.name}</span>
-                                                <span className="curator-type">{curator.type}</span>
-                                            </div>
-                                            <div className="curator-status-row">
-                                                <span className={`curator-status ${getStatusBadge(curator.status).className}`}>
-                                                    {getStatusBadge(curator.status).text}
-                                                </span>
-                                                {curator.completedAt && (
-                                                    <span className="curator-completion-date">
-                                                        {formatDateTime(curator.completedAt)}
+                                {filteredCurators.map(curator => {
+                                    const id = curator.id_tg;
+                                    const initials = getInitials(curator.name);
+                                    const color = getAvatarColor(id);
+                                    return (
+                                        <div key={id} className="curator-card">
+                                            <Avatar
+                                                name={curator.name}
+                                                initials={initials}
+                                                color={color}
+                                                size={40}
+                                            />
+                                            <div className="curator-info">
+                                                <div className="curator-name-type">
+                                                    <span className="curator-name">{curator.name}</span>
+                                                    <span className="curator-type">{curator.role}</span>
+                                                </div>
+                                                <div className="curator-status-row">
+                                                    <span className={`curator-status ${getStatusBadge(curator.status).className}`}>
+                                                        {getStatusBadge(curator.status).text}
                                                     </span>
-                                                )}
+                                                    {curator.completedAt && (
+                                                        <span className="curator-completion-date">
+                                                            {formatDateTime(curator.completedAt)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
+                                            {isTaskCompleted(curator.status) && (
+                                                <Link to={`/reports/${task.id}/${curator.id_tg}`}>
+                                                    <button className="curator-view-btn">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                            <circle cx="12" cy="12" r="3" />
+                                                        </svg>
+                                                    </button>
+                                                </Link>
+                                            )}
                                         </div>
-                                        {isTaskCompleted(curator.status) && (
-                                            <button className="curator-view-btn">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                    <circle cx="12" cy="12" r="3" />
-                                                </svg>
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
-                        )}
+                        ))}
                     </div>
                 </div>
             </div>

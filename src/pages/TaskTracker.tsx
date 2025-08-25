@@ -8,12 +8,19 @@ import TaskModal from "../components/TaskModal";
 import { stats } from "../data/tasks";
 import { fetchTasks, type TaskCard, type Scope } from '../api/tasks';
 
+type TaskFilters = {
+    search?: string;
+    status?: string;
+    dateFrom?: string | Date | null;
+    dateTo?: string | Date | null;
+};
+
 const toDate = (value?: string | number | Date | null): Date | null => {
     if (value === undefined || value === null) return null;
     return value instanceof Date ? value : new Date(value);
 };
 
-export const formatMoscow = (value: string | number | Date) =>
+export const formatDateTime = (value: string | number | Date) =>
     new Intl.DateTimeFormat('ru-RU', {
         timeZone: 'Europe/Moscow',
         year: 'numeric',
@@ -47,7 +54,8 @@ export default function TaskTracker() {
             const data = await fetchTasks({ scope: scope ?? scopeByTab(activeTab) });
             const withFormattedDeadline = data.map((t) => ({
                 ...t,
-                deadline: formatMoscow(t.deadline),
+                created: formatDateTime(t.created),
+                deadline: formatDateTime(t.deadline),
             }));
             setAllTasks(withFormattedDeadline);
             setFilteredTasks(withFormattedDeadline);
@@ -79,7 +87,7 @@ export default function TaskTracker() {
         loadTasks(scopeByTab(activeTab));
     };
 
-    const handleFilterChange = (filters) => {
+    const handleFilterChange = (filters: TaskFilters) => {
         let filtered: TaskCard[] = allTasks;
 
         if (filters.search) {
@@ -113,7 +121,7 @@ export default function TaskTracker() {
         setFilteredTasks(filtered);
     };
 
-    const handleShowDetails = (task) => {
+    const handleShowDetails = (task: TaskCard) => {
         setSelectedTask(task);
         setIsModalOpen(true);
     };

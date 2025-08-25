@@ -204,7 +204,7 @@
     color: #EF4444;
 }
 
-.curator-group-content {
+.curator-group-content .elastic-search-list {
     display: flex;
     flex-direction: column;
     gap: 12px;

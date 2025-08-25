@@ -19,7 +19,7 @@ export type TaskCard = {
     total: number;
     notCompleted: number;
     deadline: string;
-    created: string | null;
+    created: string;
     description: string;
     sampleCurators: string[];
 };
@@ -46,4 +46,19 @@ export async function fetchTasks(params: FetchTasksParams = {}): Promise<TaskCar
   const data = res.data ?? [];
 
   return data;
+}
+
+export type TaskDetail = {
+    id_tg: number;
+    name: string;
+    role: string;
+    status: 'completed' | 'completed_late' | 'not_completed';
+    completedAt: string | null;
+    reportUrl: string | null;
+    reportText: string | null;
+};
+
+export async function fetchTaskDetails(taskId: string): Promise<TaskDetail[]> {
+    const { data } = await api.get<TaskDetail[]>(`/tasks/${taskId}/`);
+    return data;
 }
