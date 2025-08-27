@@ -5,8 +5,43 @@ import Tabs from "../components/Tabs";
 import Filters from "../components/Filters";
 import TaskGrid from "../components/TaskGrid";
 import TaskModal from "../components/TaskModal";
-import { stats } from "../data/tasks";
 import { fetchTasks, type TaskCard, type Scope } from '../api/tasks';
+import Loading from "../components/Loading";
+
+const isDone = (t: TaskCard) =>
+    t.progress === 100 ||
+    ((t.total ?? 0) > 0 && (t.completed ?? 0) >= (t.total ?? 0)) ||
+    t.status === 'Завершено';
+
+const isNotStarted = (t: TaskCard) =>
+    t.progress === 0 || t.status === 'Не начато';
+
+const computeStats = (items: TaskCard[]) => {
+    const total = items.length;
+    let done = 0, notStarted = 0, inProgress = 0;
+
+    // суммарно по всем карточкам: сколько получателей завершили в срок и сколько вообще завершили
+    let onTimeRecipients = 0;
+    let completedRecipientsTotal = 0;
+
+    for (const t of items) {
+        if (isDone(t)) done++;
+        else if (isNotStarted(t)) notStarted++;
+        else inProgress++;
+
+        const ot = (t as any).on_time ?? 0; // приходит с бэка
+        const comp = (t as any).completed ?? 0; // приходит с бэка
+        onTimeRecipients += Number(ot) || 0;
+        completedRecipientsTotal += Number(comp) || 0;
+    }
+
+    const completedPercent = total ? Math.round((done / total) * 100) : 0;
+    const onTimePercent = completedRecipientsTotal
+        ? Math.round((onTimeRecipients / completedRecipientsTotal) * 100)
+        : 0;
+
+    return { total, done, notStarted, inProgress, completedPercent, onTimePercent };
+};
 
 type TaskFilters = {
     search?: string;
@@ -140,23 +175,30 @@ export default function TaskTracker() {
         loadTasks(scopeByTab(tab));
     };
 
+    const statsCalc = computeStats(filteredTasks);
+    const statsObj = {
+        total: statsCalc.total,
+        completed: statsCalc.done,
+        inProgress: statsCalc.inProgress,
+        notStarted: statsCalc.notStarted,
+        onTime: statsCalc.onTimePercent,
+    };
+
+    if (loading)
+        return <Loading />
+
     return (
         <div className="app">
             <Header onRefresh={handleRefresh} lastUpdated={lastUpdated} />
 
             <main className="main-content">
-                {loading && (
-                    <div className="content-section">
-                        <p style={{ color: '#64748B', fontSize: 14 }}>Загрузка задач...</p>
-                    </div>
-                )}
                 {error && (
                     <div className="content-section">
                         <p style={{ color: '#EF4444', fontSize: 14 }}>{error}</p>
                     </div>
                 )}
                 <div className="content-section">
-                    <StatsCards stats={stats} />
+                    <StatsCards stats={statsObj} />
                 </div>
 
                 <div className="content-section">

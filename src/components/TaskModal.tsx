@@ -146,7 +146,9 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                     )}
 
                     <div className="curators-section">
-                        <h3>Кураторы ({allCurators.length})</h3>
+                        {allCurators.length > 0 &&
+                            <h3>Кураторы ({allCurators.length})</h3>
+                        }
 
                         <div className="curator-filter-tabs">
                             <button
