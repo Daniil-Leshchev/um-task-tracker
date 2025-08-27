@@ -20,7 +20,6 @@ const computeStats = (items: TaskCard[]) => {
     const total = items.length;
     let done = 0, notStarted = 0, inProgress = 0;
 
-    // суммарно по всем карточкам: сколько получателей завершили в срок и сколько вообще завершили
     let onTimeRecipients = 0;
     let completedRecipientsTotal = 0;
 
@@ -29,8 +28,8 @@ const computeStats = (items: TaskCard[]) => {
         else if (isNotStarted(t)) notStarted++;
         else inProgress++;
 
-        const ot = (t as any).on_time ?? 0; // приходит с бэка
-        const comp = (t as any).completed ?? 0; // приходит с бэка
+        const ot = (t as any).on_time ?? 0;
+        const comp = (t as any).completed ?? 0;
         onTimeRecipients += Number(ot) || 0;
         completedRecipientsTotal += Number(comp) || 0;
     }
