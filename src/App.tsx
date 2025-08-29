@@ -12,7 +12,7 @@ import RegisterSecondPage from './pages/RegisterSecondPage';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import "./styles/App.css";
-import AdminRoute from './components/AdminROute';
+import AdminRoute from './components/AdminRoute';
 
 function RootRedirect() {
     const auth = useContext(AuthContext)!;
