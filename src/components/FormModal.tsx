@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createTask, type CreateTaskPayload } from '../api/tasks';
 import ElasticSearch from './ElasticSearch';
 import '../styles/FormModal.css';
 import { fetchSubjects, fetchDepartments } from '../api/catalogs';
@@ -6,6 +7,29 @@ import { fetchAssignmentPolicy, fetchAssignableCurators, type AssignableCurator,
 import getInitials from "../utils/getInitials";
 import getAvatarColor from "../utils/getAvatarColor";
 import capitalize from '../utils/capitalize'
+
+type DeliveryAssignment = {
+  assignment_id: number;
+  status: 'sent' | 'partially_sent' | 'failed';
+  undelivered: string[];
+  error: string | null;
+};
+
+type DeliverySummary = {
+  total: number;
+  sent: number;
+  partial: number;
+  failed: number;
+};
+
+type CreateTaskResponse = {
+  id_task: string;
+  assignments: DeliveryAssignment[];
+  summary: DeliverySummary;
+  ok: boolean;
+  undelivered_all: string[];
+  bot_unavailable: boolean;
+};
 
 type CuratorGroup = 'senior' | 'personal' | 'standard' | 'specific';
 
@@ -75,6 +99,11 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
 
   const isOKK = policy?.defaults?.role_id === 8;
 
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const [delivery, setDelivery] = useState<CreateTaskResponse | null>(null);
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -141,8 +170,8 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
       isOKK
         ? undefined
         : (policy.can_pick_subject === false
-            ? (policy?.defaults?.subject_id ?? undefined)
-            : (subjectId ?? undefined));
+          ? (policy?.defaults?.subject_id ?? undefined)
+          : (subjectId ?? undefined));
 
     let deptIds: number[] = [];
     if (!isOKK) {
@@ -211,7 +240,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
     }
 
     const base = [
-      { id: 'senior',   label: 'Старшие кураторы' },
+      { id: 'senior', label: 'Старшие кураторы' },
       { id: 'personal', label: 'Личные кураторы' },
       { id: 'standard', label: 'Стандарт-кураторы' },
     ] as const;
@@ -236,29 +265,79 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
     setStep(2);
   };
 
-  const handleSubmitStep2 = (e: React.FormEvent) => {
+  const handleSubmitStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
-    const departmentLabel =
-      (departmentIds.length === 2 && ((departmentIds.includes(ogeId || -1)) && (departmentIds.includes(tenId || -1))))
-        ? 'ОГЭ/10кл'
-        : (departmentsList.find(d => d.id_department === departmentIds[0])?.department || '');
-    const newTask: TaskData = {
-      title,
-      description,
-      deadline: new Date(deadline).getTime(),
-      reportFormat,
-      subject: subjectsList.find(s => s.id_subject === subjectId)?.subject || '',
-      department: departmentLabel,
-      assignedTo: {
-        groups: selectedGroups,
-        specificCurator: selectedGroups.includes('specific')
-          ? selectedCurators.join(', ')
-          : null
+    try {
+      const payload: CreateTaskPayload = {
+        deadline: new Date(deadline).toISOString(),
+        name: title,
+        description,
+        report: reportFormat,
+      };
+
+      if (selectedGroups.includes('specific')) {
+        payload.id_tg_list = selectedCurators;
+      } else {
+        const effectiveSubjectId =
+          (policy?.can_pick_subject === false)
+            ? (policy?.defaults?.subject_id ?? undefined)
+            : (subjectId ?? undefined);
+        const effectiveDepartmentIds =
+          (policy?.can_pick_department === false)
+            ? ((typeof policy?.defaults?.department_id === 'number') ? [policy!.defaults!.department_id!] : [])
+            : departmentIds;
+        const GROUP_TO_ROLE_ID: Record<CuratorGroup, number | null> = { standard: 1, senior: 2, personal: 3, specific: null };
+        let roleIds = selectedGroups
+          .filter(g => g !== 'specific')
+          .map(g => GROUP_TO_ROLE_ID[g]!)
+          .filter((v): v is number => typeof v === 'number');
+        if (policy?.allowed_recipient_role_ids?.length) {
+          roleIds = roleIds.filter(rid => policy!.allowed_recipient_role_ids!.includes(rid));
+        }
+        payload.subject_id = effectiveSubjectId;
+        payload.department_ids = effectiveDepartmentIds;
+        if (roleIds.length) payload.role_ids = roleIds;
       }
-    };
-    onCreate(newTask);
-    resetForm();
-    onClose();
+
+      setSubmitting(true);
+      setSubmitError(null);
+
+      const resp = await createTask(payload) as unknown as CreateTaskResponse;
+
+      setDelivery(resp);
+
+      const departmentLabel =
+        (departmentIds.length === 2 && ((departmentIds.includes(ogeId || -1)) && (departmentIds.includes(tenId || -1))))
+          ? 'ОГЭ/10кл'
+          : (departmentsList.find(d => d.id_department === departmentIds[0])?.department || '');
+      const newTask: TaskData = {
+        title,
+        description,
+        deadline: new Date(deadline).getTime(),
+        reportFormat,
+        subject: subjectsList.find(s => s.id_subject === subjectId)?.subject || '',
+        department: departmentLabel,
+        assignedTo: {
+          groups: selectedGroups,
+          specificCurator: selectedGroups.includes('specific')
+            ? selectedCurators.join(', ')
+            : null
+        }
+      };
+
+      onCreate(newTask);
+
+      const fullyOk = resp && resp.ok && !resp.bot_unavailable && resp.summary.failed === 0 && resp.summary.partial === 0;
+      if (fullyOk) {
+        resetForm();
+        onClose();
+      }
+    } catch (err: any) {
+      setSubmitError(err?.response?.data?.detail || 'Не удалось создать задачу');
+      setDelivery(null);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -269,10 +348,12 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
     setSubjectId(null);
     setDepartmentIds([]);
     setSelectedGroups([]);
+    setDelivery(null);
     setStep(1);
   };
 
   const handleCuratorSelect = (curatorId: number) => {
+    setDelivery(null);
     setSelectedCurators(prev =>
       prev.includes(curatorId)
         ? prev.filter(id => id !== curatorId)
@@ -281,6 +362,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
   };
 
   const handleGroupToggle = (groupId: CuratorGroup) => {
+    setDelivery(null);
     if (groupId === 'specific') {
       setSelectedGroups(selectedGroups.includes('specific') ? [] : ['specific']);
     } else {
@@ -378,7 +460,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                       items={subjectsList.map(s => ({ id: s.id_subject, displayText: capitalize(s.subject) }))}
                       backgroundcolor="white"
                       placeholder={policyLoading ? 'Загрузка...' : 'Поиск предмета...'}
-                      onItemClick={(item) => setSubjectId(item.id as number)}
+                      onItemClick={(item) => { setDelivery(null); setSubjectId(item.id as number); }}
                     />
                   </div>
                 </>
@@ -392,6 +474,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                       backgroundcolor="white"
                       placeholder={policyLoading ? 'Загрузка...' : 'Поиск направления...'}
                       onItemClick={(item) => {
+                        setDelivery(null);
                         const ids = (item as any).ids as number[] | undefined;
                         setDepartmentIds(ids ? ids : [item.id as number]);
                       }}
@@ -477,6 +560,37 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                 )}
               </div>
 
+              {/* Delivery results */}
+              {delivery && (
+                <div className="delivery-result" style={{marginTop: '12px', padding: '12px', border: '1px solid #eee', borderRadius: 8, background: '#fafafa'}}>
+                  {delivery.bot_unavailable ? (
+                    <div style={{color: '#c0392b', fontWeight: 600}}>
+                      Бот недоступен. Сообщения не отправлены. Попробуйте позже.
+                    </div>
+                  ) : (
+                    <>
+                      {delivery.summary.failed > 0 || delivery.summary.partial > 0 ? (
+                        <div style={{marginBottom: 8}}>
+                          <div style={{fontWeight: 600}}>Не доставлено ({delivery.undelivered_all.length}):</div>
+                          {delivery.undelivered_all.length ? (
+                            <ul style={{margin: '6px 0 0 18px'}}>
+                              {delivery.undelivered_all.map((name, idx) => (
+                                <li key={idx}>{name}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div>Список пуст.</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{color: '#2e7d32', fontWeight: 600}}>Все сообщения доставлены.</div>
+                      )}
+
+                    </>
+                  )}
+                </div>
+              )}
+              {submitError && <div className="form-error">{submitError}</div>}
               <div className="form-actions">
                 <button
                   type="button"
@@ -492,10 +606,11 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                     selectedGroups.length === 0 ||
                     (((policy?.can_pick_subject ?? true) && subjectId === null) ||
                       ((policy?.can_pick_department ?? true) && departmentIds.length === 0)) ||
-                    (selectedGroups.includes('specific') && selectedCurators.length === 0)
+                    (selectedGroups.includes('specific') && selectedCurators.length === 0) ||
+                    submitting
                   }
                 >
-                  Создать задачу
+                  {submitting ? 'Создание...' : 'Создать задачу'}
                 </button>
               </div>
             </div>

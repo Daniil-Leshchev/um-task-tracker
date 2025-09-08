@@ -1,3 +1,21 @@
+export type CreateTaskPayload = {
+    deadline: string;
+    name: string;
+    description: string;
+    report: string;
+    subject_id?: number;
+    department_ids?: number[];
+    role_ids?: number[];
+    single_id_tg?: number;
+    id_tg_list?: number[];
+};
+
+export type CreateTaskDelivery = {
+    ok: boolean;
+    errors: Array<{ assignment_id: number; id_tg?: number; error?: string }>;
+};
+
+export type CreateTaskResponse = { id_task: string; delivery: CreateTaskDelivery };
 import api from './client';
 
 export type Scope = 'all' | 'group' | 'individual';
@@ -77,5 +95,10 @@ export type Report = {
 
 export async function fetchReport(taskId: string, curatorId: string): Promise<Report> {
     const { data } = await api.get<Report>(`/tasks/reports/${encodeURIComponent(taskId)}/${curatorId}/`);
+    return data;
+}
+
+export async function createTask(payload: CreateTaskPayload): Promise<CreateTaskResponse> {
+    const { data } = await api.post<CreateTaskResponse>('/tasks/', payload);
     return data;
 }

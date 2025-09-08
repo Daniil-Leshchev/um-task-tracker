@@ -51,7 +51,7 @@ export default function Authorization() {
                             value={form.email}
                             onChange={handleChange}
                             className="authorization-container_email_input_field"
-                            placeholder="Введите email или номер телефона"
+                            placeholder="Введите email"
                             required
                         />
                         <img
