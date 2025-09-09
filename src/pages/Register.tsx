@@ -1,12 +1,21 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import '../styles/Register.css';
 import RegistrationLeftPart from '../components/RegistrationLeftPart';
 import { AuthContext } from '../context/AuthContext';
 
+declare global {
+  interface Window {
+    onTelegramAuth?: (user: any) => void;
+  }
+}
+const TG_BOT_USERNAME = import.meta.env.VITE_TG_BOT_USERNAME || '';
+
 export default function Register(){
     const auth = useContext(AuthContext)!;
     const navigate = useNavigate();
+    const tgWidgetRef = useRef<HTMLDivElement>(null);
+    const [tgAuthData, setTgAuthData] = useState<any | null>(null);
     const [form, setForm] = useState({
         last_name: '',
         first_name: '',
@@ -19,6 +28,35 @@ export default function Register(){
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
+
+    useEffect(() => {
+        if (!TG_BOT_USERNAME) return;
+
+        window.onTelegramAuth = (user: any) => {
+          setTgAuthData(user);
+          setForm(prev => ({ ...prev, id_tg: String(user.id) }));
+          setError('');
+        };
+
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://telegram.org/js/telegram-widget.js?22';
+        script.setAttribute('data-telegram-login', TG_BOT_USERNAME);
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-userpic', 'false');
+        script.setAttribute('data-request-access', 'write');
+        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+
+        if (tgWidgetRef.current) {
+          tgWidgetRef.current.innerHTML = '';
+          tgWidgetRef.current.appendChild(script);
+        }
+
+        return () => {
+          if (tgWidgetRef.current) tgWidgetRef.current.innerHTML = '';
+          delete window.onTelegramAuth;
+        };
+    }, []);
 
     useEffect(() => {
         setForm({
@@ -49,7 +87,7 @@ export default function Register(){
             setError('Пароли не совпадают');
             return;
         }
-        navigate('/registerSecondPage', { state: form });
+        navigate('/registerSecondPage', { state: { ...form, tgAuthData } });
     };
 
     if (!auth.loading && auth.user) {
@@ -144,7 +182,7 @@ export default function Register(){
                     </div>
                 </div>
                 <div className="registration-container_id_tg">
-                    <h3>ID TG</h3>
+                    {/* <h3>ID TG</h3>
                     <div className="registration-container_id_tg_input">
                         <input
                             type="text"
@@ -153,8 +191,20 @@ export default function Register(){
                             onChange={handleChange}
                             className="registration-container_id_tg_input_field"
                             placeholder="Введите id tg"
-                            required
+                            readOnly
                         />
+                    </div> */}
+                    <div className="registration-container_id_tg_widget">
+                      {TG_BOT_USERNAME ? (
+                        <>
+                          <div ref={tgWidgetRef} />
+                        </>
+                      ) : (
+                        <div className="registration-hint">
+                          Телеграм-виджет не настроен. Укажите переменную окружения
+                          &nbsp;<code>VITE_TG_BOT_USERNAME</code> в фронтенде, чтобы автоматически подставлять ID.
+                        </div>
+                      )}
                     </div>
                 </div>
 
