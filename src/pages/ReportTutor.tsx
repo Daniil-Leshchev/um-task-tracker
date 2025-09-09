@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import InfoReportTutor from "../components/InfoReportTutor";
 import type { Report } from '../api/tasks';
 import { fetchReport } from '../api/tasks';
+import { formatDateTime } from "./TaskTracker";
 
 export default function ReportTutor() {
     const { taskId, curatorId } = useParams();
@@ -37,11 +38,7 @@ export default function ReportTutor() {
     
     const updateTimestamp = () => {
         const now = new Date();
-        const timeString = now.toLocaleTimeString("ru-RU", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-        });
+        const timeString = formatDateTime(now);
         setLastUpdated(timeString);
     };
 

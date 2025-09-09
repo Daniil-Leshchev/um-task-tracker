@@ -1,15 +1,10 @@
 import "../styles/InfoReportTutor.css";
+import { formatDateTime } from "../pages/TaskTracker";
 
 const InfoReportTutor = ({ report }) => {
     if (!report) {
         return <div>Отчет не найден</div>;
     }
-
-    const formatDate = (dateString) => {
-        if (!dateString) return "Не указано";
-        const date = new Date(dateString);
-        return date.toLocaleString("ru-RU");
-    };
 
     const getStatusBadge = (status) => {
         switch (status) {
@@ -41,11 +36,11 @@ const InfoReportTutor = ({ report }) => {
                     </div>
                     <div className="task-info-item">
                         <span className="task-info-label">Время выполнения:</span>
-                        <span className="task-info-value">{formatDate(report.completedAt)}</span>
+                        <span className="task-info-value">{formatDateTime(report.completedAt)}</span>
                     </div>
                     <div className="task-info-item">
                         <span className="task-info-label">Дедлайн:</span>
-                        <span className="task-info-value">{formatDate(report.deadline)}</span>
+                        <span className="task-info-value">{formatDateTime(report.deadline)}</span>
                     </div>
                 </div>
             </div>
