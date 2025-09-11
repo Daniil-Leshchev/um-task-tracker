@@ -25,7 +25,7 @@ interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: any) => {
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -36,10 +36,12 @@ export const AuthProvider = ({ children }: any) => {
                     const { data } = await api.get('/users/me/');
                     setUser(data);
                 }
-            } catch {}
+            } catch (e) {
+            } finally {
                 setLoading(false);
-            };
-            init();
+            }
+        };
+        init();
     }, []);
 
     const login = async (email: string, password: string) => {

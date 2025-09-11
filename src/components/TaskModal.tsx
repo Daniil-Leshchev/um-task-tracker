@@ -116,14 +116,15 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                                     <span className="task-status-badge">{task.status}</span>
                                 </div>
 
-                                <div className="task-info-item">
-                                    <span className="task-info-label">Создано:</span>
-                                    <span className="task-info-value">{task.created}</span>
-                                </div>
 
                                 <div className="task-info-item">
                                     <span className="task-info-label">Выполнено:</span>
                                     <span className="task-info-value">{task.completed} из {task.total}</span>
+                                </div>
+
+                                <div className="task-info-item">
+                                    <span className="task-info-label">Создано:</span>
+                                    <span className="task-info-value">{task.created}</span>
                                 </div>
 
                                 <div className="task-info-item">
@@ -190,11 +191,11 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                                         <div className="curator-group-content">
                                             <ElasticSearch
                                                 items={allCurators.map(c => ({
-                                                    id: c.id_tg,
+                                                    id: c.email,
                                                     displayText: c.name,
                                                     name: c.name,
                                                     initials: getInitials(c.name),
-                                                    color: getAvatarColor(c.id_tg),
+                                                    color: getAvatarColor(c.email),
                                                     role: c.role,
                                                     status: c.status,
                                                     completedAt: c.completedAt
@@ -225,7 +226,7 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                                                             </div>
                                                         </div>
                                                         {isTaskCompleted(item.status) && (
-                                                            <Link to={`tasks/reports/${task.id}/${item.id}`}>
+                                                            <Link to={`tasks/reports/${task.id}/${encodeURIComponent(String(item.id))}`}>
                                                                 <button className="curator-view-btn">
                                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -244,7 +245,7 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                         ) : (
                             <div className="curators-filtered">
                                 {filteredCurators.map(curator => {
-                                    const id = curator.id_tg;
+                                    const id = curator.email;
                                     const initials = getInitials(curator.name);
                                     const color = getAvatarColor(id);
                                     return (
@@ -272,7 +273,7 @@ const TaskModal: React.FC<Props> = ({ task, isOpen, onClose }) => {
                                                 </div>
                                             </div>
                                             {isTaskCompleted(curator.status) && (
-                                                <Link to={`tasks/reports/${task.id}/${curator.id_tg}`}>
+                                                <Link to={`tasks/reports/${task.id}/${encodeURIComponent(curator.email)}`}>
                                                     <button className="curator-view-btn">
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />

@@ -11,7 +11,7 @@ import getInitials from "../utils/getInitials";
 import getAvatarColor from "../utils/getAvatarColor";
 
 interface AdminListUserItem {
-    id: number;
+    email: string;
     displayText: string;
     name: string;
     initials: string;
@@ -48,11 +48,11 @@ export default function Admin() {
 
 
     const items: AdminListUserItem[] = adminUsers.map(u => ({
-        id: u.id_tg,
+        email: u.email,
         displayText: `${u.name} (${u.role})`,
         name: u.name,
         initials: getInitials(u.name),
-        color: getAvatarColor(u.id_tg),
+        color: getAvatarColor(u.email),
         role: u.role,
         isManager: u.is_manager,
         subject: u.subject,
@@ -86,7 +86,7 @@ export default function Admin() {
 
         setLoadingMentors(true);
         try {
-            const mentors = await fetchMentorsForAssignment({ target_id_tg: user.id });
+            const mentors = await fetchMentorsForAssignment({ target_email: user.email });
             setMentorsForSelected(mentors);
         } finally {
             setLoadingMentors(false);
@@ -103,8 +103,8 @@ export default function Admin() {
         if (!selectedUser) return;
         try {
             setIsDeleting(true);
-            await deleteUser(selectedUser.id);
-            setAdminListUsers(prev => prev.filter(u => u.id_tg !== selectedUser.id));
+            await deleteUser(selectedUser.email);
+            setAdminListUsers(prev => prev.filter(u => u.email !== selectedUser.email));
             closeModal();
         } catch (err) {
         } finally {
@@ -122,7 +122,7 @@ export default function Admin() {
         }
         try {
             setIsUserConfirmed(true);
-            await confirmUser(selectedUser.id);
+            await confirmUser(selectedUser.email);
             await refreshUsers();
         } catch (e) {
         } finally {
@@ -134,7 +134,7 @@ export default function Admin() {
     const handleMentorSelect = async (mentor: MentorShort) => {
         if (!selectedUser) return;
         try {
-            await assignMentor((selectedUser as AdminListUserItem).id, mentor.id_tg);
+            await assignMentor((selectedUser as AdminListUserItem).email, mentor.email);
             await refreshUsers();
             setSelectedMentor(mentor as any);
             closeModal();
@@ -262,51 +262,60 @@ export default function Admin() {
                                     <p className="mentor-select">Определите наставника для куратора:</p>
                                     <ElasticSearch
                                         items={mentorsForSelected.map(m => ({
-                                            id: m.id_tg,
+                                            id: String(m.email),
                                             displayText: m.name,
                                             name: m.name,
                                             role: m.role,
                                             initials: getInitials(m.name),
-                                            color: getAvatarColor(m.id_tg),
+                                            color: getAvatarColor(m.email),
                                             subject: m.subject ?? '',
                                         }))}
                                         backgroundcolor="white"
                                         placeholder="Введите имя наставника..."
                                         keepListVisible={true}
-                                        onItemClick={(item) => {
-                                            const m = mentorsForSelected.find(mm => mm.id_tg === item.id);
+                                        onItemClick={(item: any) => {
+                                            const email = String(item.id);
+                                            const m = mentorsForSelected.find((mm) => mm.email === email);
                                             if (m) handleMentorSelect(m);
                                         }}
-                                        renderItem={(item) => (
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                padding: '8px',
-                                                borderRadius: '4px',
-                                                justifyContent: 'space-between',
-                                                paddingRight: '30px'
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                    <div
-                                                        style={{
-                                                            width: '42px',
-                                                            height: '42px',
-                                                            borderRadius: '50%',
-                                                            backgroundColor: item.color,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            color: 'white',
-                                                        }}
-                                                    >
-                                                        {item.initials}
-                                                    </div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div>{item.name}</div>
-                                                        <div style={{ fontSize: '0.8em', color: '#666' }}>{capitalize(item.subject || '')}, {item.role}</div>
-                                                    </div>
-                                                </div>
+                                        renderItem={(item: any) => (
+                                          <div
+                                            onClick={() => {
+                                              const email = String(item.id);
+                                              const m = mentorsForSelected.find((mm) => mm.email === email);
+                                              if (m) handleMentorSelect(m);
+                                            }}
+                                            style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              padding: '8px',
+                                              borderRadius: '4px',
+                                              justifyContent: 'space-between',
+                                              paddingRight: '30px',
+                                              cursor: 'pointer'
+                                            }}
+                                          >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                              <div
+                                                style={{
+                                                  width: '42px',
+                                                  height: '42px',
+                                                  borderRadius: '50%',
+                                                  backgroundColor: item.color,
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  justifyContent: 'center',
+                                                  color: 'white',
+                                                }}
+                                              >
+                                                {item.initials}
+                                              </div>
+                                              <div style={{ flex: 1 }}>
+                                                <div>{item.name}</div>
+                                                <div style={{ fontSize: '0.8em', color: '#666' }}>{capitalize(item.subject || '')}, {item.role}</div>
+                                              </div>
                                             </div>
+                                          </div>
                                         )}
                                     />
                                 </div>

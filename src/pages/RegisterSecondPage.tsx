@@ -65,9 +65,6 @@ export default function RegisterSecondPage() {
     const handleRoleSelect = (role: { displayText: string; id?: number }) => {
         setSelectedRoleId(role.id ?? null);
         setSelectedRoleLabel(role.displayText);
-        setSelectedSubjectId(null);
-        setSelectedSubjectLabel('');
-        setSelectedDepartmentId(null);
         setError('');
     };
 
@@ -88,26 +85,22 @@ export default function RegisterSecondPage() {
             setError('Выберите роль');
             return;
         }
-
-        if (selectedRoleLabel !== "Асессор ОКК" && !selectedSubjectId) {
+        if (!selectedSubjectId) {
             setError('Выберите предмет');
             return;
         }
-
-        if (selectedRoleLabel !== "Руководитель предмета" && selectedRoleLabel !== "Менеджер чата") {
-            if (!selectedDepartmentId) {
-                setError('Выберите направление');
-                return;
-            }
-        } 
+        if (!selectedDepartmentId) {
+            setError('Выберите направление');
+            return;
+        }
 
         setIsSubmitting(true);
         try {
             await auth.register({ 
                 ...formData, 
                 role_id: selectedRoleId,
-                subject_id: !["Руководитель предмета", "Менеджер чата"].includes(selectedRoleLabel) ? selectedSubjectId : null,
-                department_id: !["Асессор ОКК", "Руководитель предмета", "Менеджер чата"].includes(selectedRoleLabel) ? selectedDepartmentId : null,
+                subject_id: selectedSubjectId,
+                department_id: selectedDepartmentId,
                 name: `${formData.first_name} ${formData.last_name}`,
             });
             navigate('/tasktracker');
@@ -143,28 +136,24 @@ export default function RegisterSecondPage() {
                             backgroundcolor="#F8FAFC"
                             onItemClick={handleRoleSelect}
                         />
-                        {selectedRoleLabel && selectedRoleLabel !== "Асессор ОКК" && (
-                            <div style={{marginTop: '10px'}}>
-                                <ElasticSearch 
-                                    items={subjects.map(s => ({ displayText: s.name, id: s.id }))}
-                                    placeholder="Введите предмет..."
-                                    backgroundcolor="#F8FAFC"
-                                    onItemClick={handleSubjectSelect}
-                                    key={`subject-${selectedRoleLabel}`}
-                                />
-                            </div>
-                        )}
-                        {selectedSubjectLabel && selectedRoleLabel !== "Руководитель предмета" && selectedRoleLabel !== "Менеджер чата" && (
-                            <div style={{marginTop: '10px'}}>
-                                <ElasticSearch 
-                                    items={departments.map(d => ({ displayText: d.name, id: d.id }))}
-                                    placeholder="Введите направление..."
-                                    backgroundcolor="#F8FAFC"
-                                    onItemClick={handleDepartmentSelect}
-                                    key={`department-${selectedRoleId}`}
-                                />
-                            </div>
-                        )}
+                        <div style={{marginTop: '10px'}}>
+                            <ElasticSearch 
+                                items={subjects.map(s => ({ displayText: s.name, id: s.id }))}
+                                placeholder="Введите предмет..."
+                                backgroundcolor="#F8FAFC"
+                                onItemClick={handleSubjectSelect}
+                                key={`subject-${selectedRoleLabel || 'any'}`}
+                            />
+                        </div>
+                        <div style={{marginTop: '10px'}}>
+                            <ElasticSearch 
+                                items={departments.map(d => ({ displayText: d.name, id: d.id }))}
+                                placeholder="Введите направление..."
+                                backgroundcolor="#F8FAFC"
+                                onItemClick={handleDepartmentSelect}
+                                key={`department-${selectedRoleId || 'any'}`}
+                            />
+                        </div>
                     </div>
                         {error && <div className="choosingRole-error-message">{error}</div>}
 

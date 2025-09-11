@@ -1,22 +1,52 @@
-export type CreateTaskPayload = {
+import api from './client';
+
+export type CreateTaskGroupPayload = {
     deadline: string;
     name: string;
     description: string;
     report: string;
-    subject_id?: number;
-    department_ids?: number[];
-    role_ids?: number[];
-    single_id_tg?: number;
-    id_tg_list?: number[];
+    subject_id: number;
+    department_ids: number[];
+    role_ids: number[];
+};
+
+export type CreateTaskIndividualPayload = {
+    deadline: string;
+    name: string;
+    description: string;
+    report: string;
+    emails: string[];
+};
+
+export type CreateTaskPayload = CreateTaskGroupPayload | CreateTaskIndividualPayload;
+
+export type DeliveryAssignmentRow = {
+    assignment_id: number;
+    status: 'sent' | 'partially_sent' | 'failed';
+    undelivered_names: string[];
+    error: string | null;
+};
+
+export type DeliverySummary = {
+    total: number;
+    sent: number;
+    partial: number;
+    failed: number;
 };
 
 export type CreateTaskDelivery = {
     ok: boolean;
-    errors: Array<{ assignment_id: number; id_tg?: number; error?: string }>;
+    bot_unavailable: boolean;
+    assignments: DeliveryAssignmentRow[];
+    summary: DeliverySummary;
+    undelivered_names_all: string[];
 };
 
-export type CreateTaskResponse = { id_task: string; delivery: CreateTaskDelivery };
-import api from './client';
+export type CreateTaskResponse = {
+    id_task: string;
+    assignment_ids?: number[];
+    delivery: CreateTaskDelivery;
+};
 
 export type Scope = 'all' | 'group' | 'individual';
 
@@ -40,34 +70,27 @@ export type TaskCard = {
     created: string;
     description: string;
     sampleCurators: string[];
+    on_time?: number;
 };
 
 export async function fetchTasks(params: FetchTasksParams = {}): Promise<TaskCard[]> {
-    const {
-        scope = 'all',
-        subjectId,
-        departmentId,
-        status,
-        query,
-    } = params;
+  const { scope = 'all', subjectId, departmentId, status, query } = params;
 
-    const res = await api.get<TaskCard[]>('/tasks/', {
-        params: {
-            scope,
-            subject_id: subjectId ?? undefined,
-            department_id: departmentId ?? undefined,
-            status: status ?? undefined,
-            q: query ?? undefined,
-        },
-    });
+  const res = await api.get<TaskCard[]>('/tasks/', {
+    params: {
+      scope,
+      subject_id: subjectId ?? undefined,
+      department_id: departmentId ?? undefined,
+      status: status ?? undefined,
+      q: query ?? undefined,
+    },
+  });
 
-  const data = res.data ?? [];
-
-  return data;
+  return res.data ?? [];
 }
 
 export type TaskDetail = {
-    id_tg: number;
+    email: string;
     name: string;
     role: string;
     status: 'completed' | 'completed_late' | 'not_completed';
@@ -77,7 +100,7 @@ export type TaskDetail = {
 };
 
 export async function fetchTaskDetails(taskId: string): Promise<TaskDetail[]> {
-    const { data } = await api.get<TaskDetail[]>(`/tasks/${taskId}/`);
+    const { data } = await api.get<TaskDetail[]>(`/tasks/${encodeURIComponent(taskId)}/`);
     return data;
 }
 
@@ -93,8 +116,10 @@ export type Report = {
     reportText: string | null;
 };
 
-export async function fetchReport(taskId: string, curatorId: string): Promise<Report> {
-    const { data } = await api.get<Report>(`/tasks/reports/${encodeURIComponent(taskId)}/${curatorId}/`);
+export async function fetchReport(taskId: string, email: string): Promise<Report> {
+    const { data } = await api.get<Report>(
+        `/tasks/reports/${encodeURIComponent(taskId)}/${encodeURIComponent(email)}/`
+    );
     return data;
 }
 

@@ -51,7 +51,8 @@ type TaskFilters = {
 
 const toDate = (value?: string | number | Date | null): Date | null => {
     if (value === undefined || value === null) return null;
-    return value instanceof Date ? value : new Date(value);
+    const d = value instanceof Date ? value : new Date(value);
+    return isNaN(d.getTime()) ? null : d;
 };
 
 export const formatDateTime = (value: string | number | Date) =>
@@ -86,18 +87,29 @@ export default function TaskTracker() {
         setError(null);
         try {
             const data = await fetchTasks({ scope: scope ?? scopeByTab(activeTab) });
-            const withFormattedDeadline = data.map((t) => ({
-                ...t,
-                created: formatDateTime(t.created),
-                deadline: formatDateTime(t.deadline),
-            }));
+            const withFormattedDeadline = data.map((t) => {
+                const createdISO = (t as any).created;
+                const deadlineISO = (t as any).deadline;
+                return {
+                    ...t,
+                    createdISO,
+                    deadlineISO,
+                    created: formatDateTime(createdISO),
+                    deadline: formatDateTime(deadlineISO),
+                } as any;
+            });
             setAllTasks(withFormattedDeadline);
             setFilteredTasks(withFormattedDeadline);
             updateTimestamp();
-        } catch (e) {
+        } catch (e: any) {
             setAllTasks([]);
             setFilteredTasks([]);
-            setError('Не удалось загрузить задачи');
+            if (e?.status === 403) {
+                setError('Аккаунт не подтвержден администратором')
+            }
+            else {
+                setError('Ошибка загрузки задач');
+            }
         } finally {
             setLoading(false);
         }
@@ -145,7 +157,8 @@ export default function TaskTracker() {
             const toTs = toEndOfDay(to)?.getTime() ?? Number.POSITIVE_INFINITY;
 
             filtered = filtered.filter((task) => {
-                const created = toDate(task.created);
+                const raw = (task as any).createdISO ?? (task as any).created;
+                const created = toDate(raw);
                 if (!created) return false;
                 const ts = created.getTime();
                 return ts >= fromTs && ts <= toTs;
@@ -191,11 +204,6 @@ export default function TaskTracker() {
             <Header onRefresh={handleRefresh} lastUpdated={lastUpdated} />
 
             <main className="main-content">
-                {error && (
-                    <div className="content-section">
-                        <p style={{ color: '#EF4444', fontSize: 14 }}>{error}</p>
-                    </div>
-                )}
                 <div className="content-section">
                     <StatsCards stats={statsObj} />
                 </div>
@@ -211,35 +219,42 @@ export default function TaskTracker() {
                         onToggleCollapse={handleToggleFilters}
                     />
                 </div>
-
-                {activeTab === "groupCards" && (
+                {error ? (
                     <div className="content-section">
-                        <TaskGrid tasks={filteredTasks} activeTab="groupCards" onShowDetails={handleShowDetails} />
+                        <p style={{ color: '#EF4444', fontSize: 14 }}>{error}</p>
                     </div>
-                )}
+                ) : (
+                    <>
+                        {activeTab === 'groupCards' && (
+                            <div className="content-section">
+                                <TaskGrid tasks={filteredTasks} activeTab="groupCards" onShowDetails={handleShowDetails} />
+                            </div>
+                        )}
 
-                {activeTab === "individualCards" && (
-                    <div className="content-section">
-                        <TaskGrid tasks={filteredTasks} activeTab="individualCards" onShowDetails={handleShowDetails} />
-                    </div>
-                )}
+                        {activeTab === 'individualCards' && (
+                            <div className="content-section">
+                                <TaskGrid tasks={filteredTasks} activeTab="individualCards" onShowDetails={handleShowDetails} />
+                            </div>
+                        )}
 
-                {activeTab === "table" && (
-                    <div className="content-section">
-                        <div
-                            style={{
-                                background: "#FFFFFF",
-                                borderRadius: "12px",
-                                padding: "48px",
-                                textAlign: "center",
-                                border: "1px solid #E2E8F0",
-                            }}
-                        >
-                            <p style={{ color: "#64748B", fontSize: "16px" }}>
-                                Табличное представление будет реализовано позже
-                            </p>
-                        </div>
-                    </div>
+                        {activeTab === 'table' && (
+                            <div className="content-section">
+                                <div
+                                    style={{
+                                        background: '#FFFFFF',
+                                        borderRadius: '12px',
+                                        padding: '48px',
+                                        textAlign: 'center',
+                                        border: '1px solid #E2E8F0',
+                                    }}
+                                >
+                                    <p style={{ color: '#64748B', fontSize: '16px' }}>
+                                        Табличное представление будет реализовано позже
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </main>
 

@@ -7,7 +7,7 @@ import { fetchReport } from '../api/tasks';
 import { formatDateTime } from "./TaskTracker";
 
 export default function ReportTutor() {
-    const { taskId, curatorId } = useParams();
+    const { taskId, email } = useParams();
     const [report, setReport] = useState<Report | null>(null);
     const [lastUpdated, setLastUpdated] = useState("");
     const [loading, setLoading] = useState<boolean>(false);
@@ -15,14 +15,14 @@ export default function ReportTutor() {
     useEffect(() => {
         updateTimestamp();
         const task = taskId ?? '';
-        const curator = curatorId ? Number(curatorId) : NaN;
-        if (!task || Number.isNaN(curator)) return;
+        const mail = email ? decodeURIComponent(email) : '';
+        if (!task || !mail) return;
 
         let cancelled = false;
         (async () => {
             try {
                 setLoading(true);
-                const data = await fetchReport(task, String(curator));
+                const data = await fetchReport(task, mail);
                 if (!cancelled) setReport(data);
             } catch (e) {
                 if (!cancelled) setReport(null);
@@ -34,7 +34,7 @@ export default function ReportTutor() {
         return () => {
             cancelled = true;
         };
-    }, [taskId, curatorId]);
+    }, [taskId, email]);
     
     const updateTimestamp = () => {
         const now = new Date();
@@ -45,11 +45,11 @@ export default function ReportTutor() {
     const handleRefresh = async () => {
         updateTimestamp();
         const task = taskId ?? '';
-        const curator = curatorId ? Number(curatorId) : NaN;
-        if (!task || Number.isNaN(curator)) return;
+        const mail = email ? decodeURIComponent(email) : '';
+        if (!task || !mail) return;
         try {
             setLoading(true);
-            const data = await fetchReport(task, String(curator));
+            const data = await fetchReport(task, mail);
             setReport(data);
         } finally {
             setLoading(false);
@@ -73,7 +73,7 @@ export default function ReportTutor() {
                 <Header onRefresh={handleRefresh} lastUpdated={lastUpdated} />
                 <main className="main-content">
                     <div className="not-found">
-                        Отчет для задачи {taskId} и куратора {curatorId} не найден
+                        Отчет для задачи {taskId} и куратора {email} не найден
                     </div>
                 </main>
             </div>

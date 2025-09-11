@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createTask, type CreateTaskPayload } from '../api/tasks';
+import { createTask, type CreateTaskIndividualPayload, type CreateTaskGroupPayload } from '../api/tasks';
 import ElasticSearch from './ElasticSearch';
 import '../styles/FormModal.css';
 import { fetchSubjects, fetchDepartments } from '../api/catalogs';
@@ -60,7 +60,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
   const [deadline, setDeadline] = useState('');
   const [reportFormat, setReportFormat] = useState('');
   const [selectedGroups, setSelectedGroups] = useState<CuratorGroup[]>([]);
-  const [selectedCurators, setSelectedCurators] = useState<number[]>([]);
+  const [selectedCurators, setSelectedCurators] = useState<string[]>([]);
 
   const [subjectId, setSubjectId] = useState<number | null>(null);
   const [departmentIds, setDepartmentIds] = useState<number[]>([]);
@@ -212,9 +212,9 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
             })
           )
         );
-        const merged = new Map<number, AssignableCurator>();
+        const merged = new Map<string, AssignableCurator>();
         for (const arr of chunks) {
-          for (const c of arr) merged.set(c.id_tg, c);
+          for (const c of arr) merged.set(c.email, c);
         }
         if (!cancelled) setAssignable(Array.from(merged.values()));
       } catch {
@@ -268,43 +268,66 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
   const handleSubmitStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload: CreateTaskPayload = {
+      const base = {
         deadline: new Date(deadline).toISOString(),
         name: title,
         description,
         report: reportFormat,
       };
 
+      let resp: any;
+
       if (selectedGroups.includes('specific')) {
-        payload.id_tg_list = selectedCurators;
+        const payload: CreateTaskIndividualPayload = {
+          ...base,
+          emails: selectedCurators,
+        };
+
+        setSubmitting(true);
+        setSubmitError(null);
+        resp = await createTask(payload);
       } else {
         const effectiveSubjectId =
           (policy?.can_pick_subject === false)
             ? (policy?.defaults?.subject_id ?? undefined)
             : (subjectId ?? undefined);
+
         const effectiveDepartmentIds =
           (policy?.can_pick_department === false)
             ? ((typeof policy?.defaults?.department_id === 'number') ? [policy!.defaults!.department_id!] : [])
             : departmentIds;
-        const GROUP_TO_ROLE_ID: Record<CuratorGroup, number | null> = { standard: 1, senior: 2, personal: 3, specific: null };
+
+        const GROUP_TO_ROLE_ID: Record<CuratorGroup, number | null> = {
+          standard: 1,
+          senior: 2,
+          personal: 3,
+          specific: null
+        };
+
         let roleIds = selectedGroups
           .filter(g => g !== 'specific')
           .map(g => GROUP_TO_ROLE_ID[g]!)
           .filter((v): v is number => typeof v === 'number');
+
         if (policy?.allowed_recipient_role_ids?.length) {
           roleIds = roleIds.filter(rid => policy!.allowed_recipient_role_ids!.includes(rid));
         }
-        payload.subject_id = effectiveSubjectId;
-        payload.department_ids = effectiveDepartmentIds;
-        if (roleIds.length) payload.role_ids = roleIds;
+
+        const payload: CreateTaskGroupPayload = {
+          ...base,
+          subject_id: effectiveSubjectId,
+          department_ids: effectiveDepartmentIds,
+          ...(roleIds.length ? { role_ids: roleIds } : {})
+        };
+
+        setSubmitting(true);
+        setSubmitError(null);
+        resp = await createTask(payload);
       }
 
-      setSubmitting(true);
-      setSubmitError(null);
+      const response = resp as unknown as CreateTaskResponse;
 
-      const resp = await createTask(payload) as unknown as CreateTaskResponse;
-
-      setDelivery(resp);
+      setDelivery(response);
 
       const departmentLabel =
         (departmentIds.length === 2 && ((departmentIds.includes(ogeId || -1)) && (departmentIds.includes(tenId || -1))))
@@ -327,7 +350,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
 
       onCreate(newTask);
 
-      const fullyOk = resp && resp.ok && !resp.bot_unavailable && resp.summary.failed === 0 && resp.summary.partial === 0;
+      const fullyOk = response && response.ok && !response.bot_unavailable && response.summary.failed === 0 && response.summary.partial === 0;
       if (fullyOk) {
         resetForm();
         onClose();
@@ -352,12 +375,12 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
     setStep(1);
   };
 
-  const handleCuratorSelect = (curatorId: number) => {
+  const handleCuratorSelect = (curatorMail: string) => {
     setDelivery(null);
     setSelectedCurators(prev =>
-      prev.includes(curatorId)
-        ? prev.filter(id => id !== curatorId)
-        : [...prev, curatorId]
+      prev.includes(curatorMail)
+        ? prev.filter(id => id !== curatorMail)
+        : [...prev, curatorMail]
     );
   };
 
@@ -512,11 +535,11 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                     <div>
                       <ElasticSearch
                         items={assignable.map((c: AssignableCurator) => ({
-                          id: c.id_tg,
+                          id: c.email,
                           displayText: `${c.name} (${c.role_name})`,
                           name: c.name,
                           initials: getInitials(c.name),
-                          color: getAvatarColor(c.id_tg),
+                          color: getAvatarColor(c.email),
                           role: c.role_name,
                         }))}
                         backgroundcolor="white"
@@ -553,15 +576,14 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                             </div>
                           </div>
                         )}
-                        onItemClick={(item) => handleCuratorSelect(item.id)}
+                        onItemClick={(item) => handleCuratorSelect(item.id as string)}
                       />
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Delivery results */}
-              {delivery && (
+              {/* {delivery && (
                 <div className="delivery-result" style={{marginTop: '12px', padding: '12px', border: '1px solid #eee', borderRadius: 8, background: '#fafafa'}}>
                   {delivery.bot_unavailable ? (
                     <div style={{color: '#c0392b', fontWeight: 600}}>
@@ -589,7 +611,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                     </>
                   )}
                 </div>
-              )}
+              )} */}
               {submitError && <div className="form-error">{submitError}</div>}
               <div className="form-actions">
                 <button

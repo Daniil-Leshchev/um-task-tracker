@@ -1,5 +1,7 @@
 import api from "./client";
 
+const enc = (email: string) => encodeURIComponent(email);
+
 export interface UserProfileUpdate {
   current_password?: string;
   new_password?: string;
@@ -7,7 +9,7 @@ export interface UserProfileUpdate {
 }
 
 export interface AdminListUser {
-  id_tg: number;
+  email: string;
   name: string;
   subject: string;
   department: string;
@@ -29,21 +31,21 @@ export async function fetchAdminListUsers(): Promise<AdminListUser[]> {
 }
 
 export async function confirmUser(
-  id_tg: number,
+  email: string,
   confirm = true
 ): Promise<AdminListUser> {
-  const { data } = await api.patch<AdminListUser>(`/users/${id_tg}/confirm/`, {
+  const { data } = await api.patch<AdminListUser>(`/users/${enc(email)}/confirm/`, {
     confirm,
   });
   return data;
 }
 
-export async function deleteUser(id_tg: number): Promise<void> {
-    await api.delete(`/users/${id_tg}/delete/`);
+export async function deleteUser(email: string): Promise<void> {
+    await api.delete(`/users/${enc(email)}/delete/`);
 }
 
 export interface MentorShort {
-    id_tg: number;
+    email: string;
     name: string;
     role_id: number;
     role: string;
@@ -52,15 +54,15 @@ export interface MentorShort {
 }
 
 export async function fetchMentorsForAssignment(params: {
-    target_id_tg?: number;
+    target_email?: string;
 }): Promise<MentorShort[]> {
     const { data } = await api.get<MentorShort[]>('/users/mentors-for-assignment/', { params });
     return data;
 }
 
-export async function assignMentor(userIdTg: number, mentorIdTg: number) {
-    const { data } = await api.patch(`/users/${userIdTg}/assign-mentor/`, {
-        mentor_id_tg: mentorIdTg,
+export async function assignMentor(userEmail: string, mentorEmail: string) {
+    const { data } = await api.patch(`/users/${enc(userEmail)}/assign-mentor/`, {
+        mentor_email: mentorEmail,
     });
     return data as AdminListUser;
 }

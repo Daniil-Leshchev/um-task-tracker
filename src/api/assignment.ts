@@ -12,7 +12,7 @@ export type AssignmentPolicy = {
 };
 
 export type AssignableCurator = {
-  id_tg: number;
+  email: string;
   name: string;
   role_id: number;
   role_name: string;
@@ -29,8 +29,8 @@ export type FetchRecipientsParams = {
     subject_id?: number | null;
     department_id?: number | null;
     role_ids?: number[];
-    single_id_tg?: number | null;
-    id_tg_list?: number[];
+    single_email?: string | null;
+    emails?: string[];
 };
 
 export async function fetchAssignableCurators(params: FetchRecipientsParams = {}) {
@@ -39,8 +39,8 @@ export async function fetchAssignableCurators(params: FetchRecipientsParams = {}
     if (params.subject_id != null) qs.set('subject_id', String(params.subject_id));
     if (params.department_id != null) qs.set('department_id', String(params.department_id));
     if (params.role_ids && params.role_ids.length) qs.set('role_ids', params.role_ids.join(','));
-    if (params.single_id_tg != null) qs.set('single_id_tg', String(params.single_id_tg));
-    if (params.id_tg_list && params.id_tg_list.length) qs.set('id_tg_list', params.id_tg_list.join(','));
+    if (params.single_email != null) qs.set('single_email', params.single_email);
+    if (params.emails && params.emails.length) qs.set('emails', params.emails.join(','));
 
     const url = qs.toString() ? `/tasks/recipients/?${qs.toString()}` : '/tasks/recipients/';
     const { data } = await api.get<AssignableCurator[]>(url);

@@ -12,8 +12,7 @@ export default function Register(){
         first_name: '',
         email: '',
         password: '',
-        passwordConfirm: '',
-        id_tg: '',
+        passwordConfirm: ''
     });
     const [error, setError] = useState<string>('');
     const [showPassword, setShowPassword] = useState(false);
@@ -26,8 +25,7 @@ export default function Register(){
             first_name: '',
             email: '',
             password: '',
-            passwordConfirm: '',
-            id_tg: ''
+            passwordConfirm: ''
         });
         setError('');
         setShowPassword(false);
@@ -140,20 +138,6 @@ export default function Register(){
                             src={showPasswordConfirm ? "/images/openPassword.svg" : "/images/hidePassword.svg"}
                             alt="Спрятать пароль"
                             onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                        />
-                    </div>
-                </div>
-                <div className="registration-container_id_tg">
-                    <h3>ID TG</h3>
-                    <div className="registration-container_id_tg_input">
-                        <input
-                            type="text"
-                            name="id_tg"
-                            value={form.id_tg}
-                            onChange={handleChange}
-                            className="registration-container_id_tg_input_field"
-                            placeholder="Введите id tg"
-                            required
                         />
                     </div>
                 </div>
