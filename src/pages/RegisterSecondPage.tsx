@@ -5,7 +5,6 @@ import { AuthContext } from '../context/AuthContext';
 import RegistrationLeftPart from '../components/RegistrationLeftPart';
 import { fetchRoles, fetchSubjects, fetchDepartments } from '../api/catalogs';
 import { isAxiosError } from 'axios';
-import capitalize from '../utils/capitalize';
 
 export default function RegisterSecondPage() {
     const [loading, setLoading] = useState<boolean>(true);
@@ -50,7 +49,7 @@ export default function RegisterSecondPage() {
                 ]);
                 if (!mounted) return;
                 setRoles(r.map(it => ({ id: it.id_role, name: it.role })));
-                setSubjects(s.map(it => ({ id: it.id_subject, name: capitalize(it.subject)})));
+                setSubjects(s.map(it => ({ id: it.id_subject, name: it.subject})));
                 setDepartments(d.map(it => ({ id: it.id_department, name: it.department })));
             } catch (err) {
                 console.error('Failed to load catalogs', err);

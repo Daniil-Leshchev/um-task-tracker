@@ -6,7 +6,6 @@ import { fetchSubjects, fetchDepartments } from '../api/catalogs';
 import { fetchAssignmentPolicy, fetchAssignableCurators, type AssignableCurator, type AssignmentPolicy } from '../api/assignment';
 import getInitials from "../utils/getInitials";
 import getAvatarColor from "../utils/getAvatarColor";
-import capitalize from '../utils/capitalize'
 
 type DeliveryAssignment = {
   assignment_id: number;
@@ -480,7 +479,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }: CreateTaskModalProps) =>
                   <h3>Выберите предмет:</h3>
                   <div className="form-group_elastic">
                     <ElasticSearch
-                      items={subjectsList.map(s => ({ id: s.id_subject, displayText: capitalize(s.subject) }))}
+                      items={subjectsList.map(s => ({ id: s.id_subject, displayText: s.subject }))}
                       backgroundcolor="white"
                       placeholder={policyLoading ? 'Загрузка...' : 'Поиск предмета...'}
                       onItemClick={(item) => { setDelivery(null); setSubjectId(item.id as number); }}

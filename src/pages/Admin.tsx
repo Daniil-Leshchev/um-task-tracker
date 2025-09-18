@@ -6,7 +6,6 @@ import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
 import type { AdminListUser as User } from "../api/users";
-import capitalize from "../utils/capitalize";
 import getInitials from "../utils/getInitials";
 import getAvatarColor from "../utils/getAvatarColor";
 
@@ -179,7 +178,7 @@ export default function Admin() {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <div>{item.name}</div>
-                                        <div style={{ fontSize: '0.8em', color: '#666' }}>{capitalize(item.subject || '')}, {item.role}, {item.department || ''}</div>
+                                        <div style={{ fontSize: '0.8em', color: '#666' }}>{item.subject || ''}, {item.role}, {item.department || ''}</div>
                                     </div>
                                 </div>
                                 {!item.needConfirmation && item.mentorName && (
@@ -312,7 +311,7 @@ export default function Admin() {
                                               </div>
                                               <div style={{ flex: 1 }}>
                                                 <div>{item.name}</div>
-                                                <div style={{ fontSize: '0.8em', color: '#666' }}>{capitalize(item.subject || '')}, {item.role}</div>
+                                                <div style={{ fontSize: '0.8em', color: '#666' }}>{item.subject || ''}, {item.role}</div>
                                               </div>
                                             </div>
                                           </div>

@@ -5,7 +5,6 @@ import { AuthContext } from '../context/AuthContext';
 import Loading from '../components/Loading';
 import { Link } from 'react-router-dom';
 import { updateUserProfile } from '../api/users'
-import capitalize from '../utils/capitalize';
 
 
 export default function Profile() {
@@ -129,7 +128,7 @@ export default function Profile() {
 
                     <div className="profile-block">
                         <label>Предмет</label>
-                        <span>{capitalize(user.subject)}</span>
+                        <span>{user.subject}</span>
                     </div>
 
                     <div className="profile-block">
