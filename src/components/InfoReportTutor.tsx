@@ -1,7 +1,12 @@
 import "../styles/InfoReportTutor.css";
 import { formatDateTime } from "../pages/TaskTracker";
+import { type Report } from "../api/tasks";
 
-const InfoReportTutor = ({ report }) => {
+interface InfoReportTutorProps {
+    report: Report | null;
+}
+
+const InfoReportTutor: React.FC<InfoReportTutorProps> = ({ report }) => {
     if (!report) {
         return <div>Отчет не найден</div>;
     }
@@ -18,8 +23,6 @@ const InfoReportTutor = ({ report }) => {
                 return { text: 'Неизвестно', className: 'status-badge-unknown' };
         }
     };
-
-    const directUrl = `https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=${encodeURIComponent(report.reportUrl)}`;
 
     return (
         <div className="main-container">
@@ -46,22 +49,16 @@ const InfoReportTutor = ({ report }) => {
             </div>
             <div>
                 <h2>Отчет куратора:</h2>
-                    {report.reportUrl || report.reportText ? (
-                    <div className="report-info">
-                        {report.reportUrl && (
-                        <img 
-                            className="report-info-image"
-                            src="../images/picture.jpg" 
-                            alt="Картинка отчета"
-                        />
-                        )}
+                    {(report.reportUrl || report.reportText) && (
+                    <div className="report-info-text">
                         {report.reportText && (
-                        <div className="report-info-text">
-                            {report.reportText}
-                        </div>
+                            <span>{report.reportText}</span>
+                        )}
+                        {report.reportUrl && (
+                            <a href={report.reportUrl} className="report-link" target="_blank" rel="noopener noreferrer">Картинка</a>
                         )}
                     </div>
-                    ) : (
+                    ) || (
                     <div>Отчет отсутствует</div>
                     )}
             </div>

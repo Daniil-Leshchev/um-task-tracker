@@ -45,3 +45,8 @@
     border-radius: 12px; 
     padding: 20px;
 }
+
+.report-link {
+    margin-top: 10px;
+    display: block;
+}
