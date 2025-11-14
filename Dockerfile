@@ -2,7 +2,10 @@ FROM node:20-alpine as build
 WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm install
-COPY .env ./
+
+ARG VITE_API_BASE_URL
+RUN echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" > .env
+
 COPY frontend/ ./
 RUN npm run build
 
